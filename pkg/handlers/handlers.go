@@ -56,7 +56,7 @@ func (handlers *Handlers) SignInHandler() http.Handler {
 		http.SetCookie(w, &http.Cookie{
 			Name:     "Refresh-token",
 			Value:    user.RefreshToken,
-			Expires:  time.Now().UTC().AddDate(0, 6, 0),
+			Expires:  user.ExpirationTime,
 			HttpOnly: true,
 			Secure:   false, // set true on realese
 			SameSite: http.SameSiteStrictMode,

@@ -9,7 +9,7 @@ type Repository interface {
 	SignUpUser(user *models.User) error
 	VerifyUser(user *models.User) error
 	GetUUid(refreshToken string) (string, error)
-	GetVerifiedUser(user *models.User) ([2]string, error)
+	GetVerifiedUser(user *models.User) (*models.User, error)
 	UpdateRefreshToken(user *models.User, newToken string) error
 } 
 

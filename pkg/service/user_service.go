@@ -3,6 +3,7 @@ package service
 import (
 	"errors"
 	"time"
+
 	config "github.com/Kin-dza-dzaa/userApi/configs"
 	"github.com/Kin-dza-dzaa/userApi/internal/models"
 	repository "github.com/Kin-dza-dzaa/userApi/pkg/repositories"
@@ -38,19 +39,24 @@ func (service *UserService) SignUpUser(user *models.User) error {
 }
 
 func (service *UserService) SignInUser(user *models.User) (string, error) {
-	data, err := service.repository.GetVerifiedUser(user)
+	dbUser, err := service.repository.GetVerifiedUser(user)
 	if err != nil {
 		return "", err
 	}
-	if err := bcrypt.CompareHashAndPassword([]byte(data[1]), []byte(user.Password)); err != nil {
+	if err := bcrypt.CompareHashAndPassword([]byte(dbUser.Password), []byte(user.Password)); err != nil {
 		return "", errors.New("invalid password")
 	}
-	user.RefreshToken = uniuri.NewLen(512)
-	user.ExpirationTime = time.Now().UTC().AddDate(0, 6, 0)
-	if err := service.repository.UpdateRefreshToken(user, user.RefreshToken); err != nil {
-		return "", err
+	if time.Now().After(dbUser.ExpirationTime) {
+		user.RefreshToken = uniuri.NewLen(512)
+		user.ExpirationTime = time.Now().UTC().AddDate(0, 6, 0)
+		if err := service.repository.UpdateRefreshToken(user, user.RefreshToken); err != nil {
+			return "", err
+		}
+	} else {
+		user.RefreshToken = dbUser.RefreshToken
+		user.ExpirationTime = dbUser.ExpirationTime
 	}
-	return service.generateToken(data[0])
+	return service.generateToken(dbUser.UserId.String())
 }
 
 func (service *UserService) VerifyUser(user *models.User) (string, error) {

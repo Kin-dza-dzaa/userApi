@@ -44,17 +44,16 @@ func (repository *UserRepositry) GetUUid(refreshToken string) (string, error) {
 	return userId, nil
 }
 
-func (repository *UserRepositry) GetVerifiedUser(user *models.User) ([2]string, error) {
-	sqlCommand := `SELECT id, password FROM users WHERE
+func (repository *UserRepositry) GetVerifiedUser(user *models.User) (*models.User, error) {
+	sqlCommand := `SELECT id, password, refresh_token,expiration_time FROM users WHERE
 					email = $1 AND
 					verified = true;
 	`
-	var UUidString string
-	var password string
-	if err := repository.pool.QueryRow(context.TODO(), sqlCommand, user.Email).Scan(&UUidString, &password); err != nil {
-		return [2]string{}, errors.New("internal error")
+	var dbUser models.User
+	if err := repository.pool.QueryRow(context.TODO(), sqlCommand, user.Email).Scan(&dbUser.UserId, &dbUser.Password, &dbUser.RefreshToken, &dbUser.ExpirationTime); err != nil {
+		return &dbUser, errors.New("internal error")
 	}
-	return [2]string{UUidString, password}, nil
+	return &dbUser, nil
 }
 
 func (repostiory *UserRepositry) UpdateRefreshToken(user *models.User, newToken string) error {
