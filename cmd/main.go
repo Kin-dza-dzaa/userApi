@@ -12,7 +12,6 @@ import (
 	repository "github.com/Kin-dza-dzaa/userApi/pkg/repositories"
 	"github.com/Kin-dza-dzaa/userApi/pkg/service"
 	"github.com/jackc/pgx/v4/pgxpool"
-	"github.com/rs/cors"
 )
 
 func main() {
@@ -38,20 +37,20 @@ func main() {
 	if err != nil {
 		logger.Fatal().Msg(err.Error())
 	}
-	repository := repository.NewRepository(pool)
-	service := service.NewService(repository, config, validator)
-	handlers := handlers.NewHandlers(service, *config)
+	repository := repository.NewRepository(pool, logger)
+	service := service.NewService(repository, config, validator, logger)
+	MyHandlers := handlers.NewHandlers(service, *config, logger)
 	srv := &http.Server{
 		Addr: config.Adress,
 		WriteTimeout: 15 * time.Second,
 		ReadTimeout:  15 * time.Second,
-		Handler: cors.Default().Handler(handlers.Router),
+		Handler: MyHandlers.Cors.Handler(MyHandlers.Router),
 	}
 	go func() {
+		log.Printf("Starting userApi server at %v \n", config.Adress)
 		if err := srv.ListenAndServe(); err != nil {
 			logger.Panic().Msg(err.Error())
 		}
 	}()
-	//  := make(chan bool)
-	// <-
+	<- handlers.StopHTTPServerChan
 }

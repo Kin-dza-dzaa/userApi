@@ -3,16 +3,19 @@ package repository
 import (
 	"github.com/Kin-dza-dzaa/userApi/internal/models"
 	"github.com/jackc/pgx/v4/pgxpool"
+	"github.com/rs/zerolog"
 )
 
 type Repository interface {
-	SignUpUser(user *models.User) error
+	AddUser(user *models.User) error
+	UpdateCredentials(user *models.User) error
 	VerifyUser(user *models.User) error
-	GetUUid(refreshToken string) (string, error)
+	GetUUid(user *models.User) error
 	GetVerifiedUser(user *models.User) (*models.User, error)
-	UpdateRefreshToken(user *models.User, newToken string) error
+	UpdateRefreshToken(user *models.User) error
+	IfUnverifiedUserExists(user *models.User) (bool, error)
 } 
 
-func NewRepository(pool *pgxpool.Pool) Repository {
+func NewRepository(pool *pgxpool.Pool, logger *zerolog.Logger) Repository {
 	return NewUserRepository(pool)
 }
