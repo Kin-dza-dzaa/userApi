@@ -61,7 +61,7 @@ func (suite *HandlersSuite) TestSignUpHandler() {
 		if err != nil {
 			suite.FailNow(err.Error())
 		}
-		r := httptest.NewRequest("POST", "/user",bytes.NewReader(byteData))	
+		r := httptest.NewRequest("POST", "/user", bytes.NewReader(byteData))	
 		w := httptest.NewRecorder()
 		suite.service.On("SignUpUser", mock.Anything).Return(nil).Once()
 		suite.handlers.SignUpHandler().ServeHTTP(w, r)

@@ -2,30 +2,23 @@ package main
 
 import (
 	"context"
-	"log"
+	"fmt"
 	"net/http"
+	"os"
 	"time"
-	"github.com/Kin-dza-dzaa/userApi/configs"
-	"github.com/Kin-dza-dzaa/userApi/internal/logger"
+
+	config "github.com/Kin-dza-dzaa/userApi/configs"
 	"github.com/Kin-dza-dzaa/userApi/internal/validation"
 	"github.com/Kin-dza-dzaa/userApi/pkg/handlers"
 	repository "github.com/Kin-dza-dzaa/userApi/pkg/repositories"
 	"github.com/Kin-dza-dzaa/userApi/pkg/service"
 	"github.com/jackc/pgx/v4/pgxpool"
+	"github.com/rs/zerolog"
 )
 
 func main() {
-	writer, err := logger.GetWriter()
-	if err != nil {
-		log.Panic(err)
-	}
-	defer func() {
-		if err := writer.Close(); err != nil {
-			log.Panic(err)
-		}
-	}()
-	logger := logger.GetLogger(writer)
-	config, err := config.ReadConfig(logger)
+	logger := zerolog.New(zerolog.SyncWriter(os.Stdout)).With().Timestamp().Caller().Logger()
+	config, err := config.ReadConfig(&logger)
 	if err != nil {
 		logger.Fatal().Msg(err.Error())
 	}
@@ -37,20 +30,20 @@ func main() {
 	if err != nil {
 		logger.Fatal().Msg(err.Error())
 	}
-	repository := repository.NewRepository(pool, logger)
-	service := service.NewService(repository, config, validator, logger)
-	MyHandlers := handlers.NewHandlers(service, *config, logger)
+	repository := repository.NewRepository(pool, &logger)
+	service := service.NewService(repository, config, validator, &logger)
+	MyHandlers := handlers.NewHandlers(service, *config, &logger)
 	srv := &http.Server{
-		Addr: config.Adress,
+		Addr:         config.Adress,
 		WriteTimeout: 15 * time.Second,
 		ReadTimeout:  15 * time.Second,
-		Handler: MyHandlers.Cors.Handler(MyHandlers.Router),
+		Handler:      MyHandlers.Cors.Handler(MyHandlers.Router),
 	}
 	go func() {
-		log.Printf("Starting userApi server at %v \n", config.Adress)
+		logger.Info().Msg(fmt.Sprintf("Staring server userapi at %v", config.Adress))
 		if err := srv.ListenAndServe(); err != nil {
 			logger.Panic().Msg(err.Error())
 		}
 	}()
-	<- handlers.StopHTTPServerChan
+	<-handlers.StopHTTPServerChan
 }

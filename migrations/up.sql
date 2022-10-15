@@ -1,6 +1,12 @@
+CREATE ROLE userapi WITH PASSWORD '12345' LOGIN;
+
+CREATE DATABASE userapi WITH OWNER userapi;
+
+\c userapi userapi
+
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
-CREATE TABLE users(
+CREATE TABLE IF NOT EXISTS users(
     id                UUID                                                                  NOT NULL,
     user_name         TEXT                                                                  NOT NULL CHECK(user_name != ''),
     email             TEXT                                                                  NOT NULL CHECK(email != ''),
@@ -10,7 +16,7 @@ CREATE TABLE users(
     expiration_time   TIMESTAMP,  
     verification_code TEXT                                                                  NOT NULL,
     verified          BOOL                                                                  NOT NULL,
-    PRIMARY KEY (id),
+    UNIQUE (id),
     UNIQUE(user_name),
     UNIQUE (email)
 );

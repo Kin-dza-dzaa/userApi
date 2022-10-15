@@ -125,7 +125,7 @@ func (service *UserService) hashPassword(user *models.User) error {
 }
 
 func (service *UserService) sendVerificationCode(user *models.User) error {
-	t, err := template.ParseFiles("./internal/templates/response_template.html")
+	t, err := template.ParseFiles(service.config.TemplateLocation)
 	if err != nil {
 		service.logger.Error().Msg(err.Error())
 		return errors.New("internal error")

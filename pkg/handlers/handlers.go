@@ -16,12 +16,11 @@ import (
 
 var StopHTTPServerChan = make(chan bool)
 
-
 type Handlers struct {
 	Router  *mux.Router
 	Cors    *cors.Cors
 	Service service.Service
-	Logger *zerolog.Logger
+	Logger  *zerolog.Logger
 }
 
 func (handlers *Handlers) SignUpHandler() http.Handler {
@@ -178,22 +177,21 @@ func (handlers *Handlers) LogOutHandler() http.Handler {
 
 func NewHandlers(service service.Service, config config.Config, Logger *zerolog.Logger) *Handlers {
 	handlers := new(Handlers)
-	handlers.Logger = Logger	
+	handlers.Logger = Logger
 	handlers.Service = service
-	handlers.Router = mux.NewRouter().Host(config.Adress).Subrouter()
+	handlers.Router = mux.NewRouter()
 	handlers.Cors = cors.New(cors.Options{
 		AllowedOrigins: strings.Split(config.AllowedOrigins, ","),
 		AllowedHeaders: []string{"User-Agent", "Content-type"},
 		MaxAge:         5,
 		AllowedMethods: []string{"POST", "GET", "PUT", "DELETE", "OPTIONS"},
 	})
-
 	handlers.Router.Handle("/user", handlers.SignUpHandler()).Methods("POST").Schemes("http")
 	user := handlers.Router.PathPrefix("/user").Subrouter()
-		user.Handle("/auth", handlers.SignInHandler()).Methods("POST").Schemes("http")
-		user.Handle("/token", handlers.GetTokenHandler()).Methods("GET").Schemes("http")
-		user.Handle("/verify/{code:.{16}}", handlers.VerifyHandler()).Methods("POST").Schemes("http")
-		user.Handle("/logout", handlers.LogOutHandler()).Methods("GET").Schemes("http")
-		
+	user.Handle("/auth", handlers.SignInHandler()).Methods("POST").Schemes("http")
+	user.Handle("/token", handlers.GetTokenHandler()).Methods("GET").Schemes("http")
+	user.Handle("/verify/{code:.{16}}", handlers.VerifyHandler()).Methods("POST").Schemes("http")
+	user.Handle("/logout", handlers.LogOutHandler()).Methods("GET").Schemes("http")
+
 	return handlers
 }

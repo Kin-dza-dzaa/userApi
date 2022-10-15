@@ -12,12 +12,14 @@ type Config struct{
 	AllowedOrigins string	`mapstructure:"ALLOWED_ORIGINS"`
 	SmtpUserName string		`mapstructure:"SMTP_USER_NAME"`
 	SmtpPassword string		`mapstructure:"SMTP_PASSWORD"`
+	TemplateLocation string	`mapstructure:"TEMPLATE_LOCATION"`
 }
 
 func ReadConfig(logger *zerolog.Logger) (*Config, error) {
 	viper.SetConfigName("config")
 	viper.SetConfigType("env")
 	viper.AddConfigPath("./configs")
+	viper.AddConfigPath(".")
 	viper.AddConfigPath("./../../configs") // for test
 	viper.AddConfigPath("./../configs") // for test
 	config := new(Config)
