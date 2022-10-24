@@ -6,12 +6,12 @@ import (
 	"strings"
 
 	config "github.com/Kin-dza-dzaa/userApi/configs"
+	"github.com/Kin-dza-dzaa/userApi/internal/apierror"
+	"github.com/Kin-dza-dzaa/userApi/internal/dto"
 	"github.com/Kin-dza-dzaa/userApi/internal/models"
-	"github.com/Kin-dza-dzaa/userApi/internal/validation"
 	"github.com/Kin-dza-dzaa/userApi/pkg/service"
 	"github.com/gorilla/mux"
 	"github.com/rs/cors"
-	"github.com/rs/zerolog"
 )
 
 var StopHTTPServerChan = make(chan bool)
@@ -20,85 +20,84 @@ type Handlers struct {
 	Router  *mux.Router
 	Cors    *cors.Cors
 	Service service.Service
-	Logger  *zerolog.Logger
+	ApiError *apierror.ApiError 
+	Config *config.Config
 }
 
-func (handlers *Handlers) SignUpHandler() http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+func (handlers *Handlers) SignUpHandler() apierror.UserHandler {
+	return func(w http.ResponseWriter, r *http.Request) error {
 		w.Header().Set("Content-type", "application/json")
-		var user models.User
-		if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
-			w.WriteHeader(validation.ParseError(err))
-			json.NewEncoder(w).Encode(map[string]interface{}{"result": "error", "message": "wrong input"})
-			return
+		var userDto dto.UserSignUpDto
+		if err := json.NewDecoder(r.Body).Decode(&userDto); err != nil {
+			return err
 		}
-		if err := handlers.Service.SignUpUser(&user); err != nil {
-			w.WriteHeader(validation.ParseError(err))
-			json.NewEncoder(w).Encode(map[string]interface{}{"result": "error", "message": err.Error()})
-			return
+		User, err := userDto.IntoUser()
+		if err != nil {
+			return err
+		}
+		if err := handlers.Service.SignUpUser(r.Context(), User); err != nil {
+			return err
 		}
 		w.WriteHeader(http.StatusOK)
 		json.NewEncoder(w).Encode(map[string]interface{}{"result": "ok", "message": "email was sent"})
-	})
+		return nil
+	}
 }
 
-func (handlers *Handlers) SignInHandler() http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+func (handlers *Handlers) SignInHandler() apierror.UserHandler {
+	return func(w http.ResponseWriter, r *http.Request) error {
 		w.Header().Set("Content-type", "application/json")
-		var user models.User
-		if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
-			w.WriteHeader(validation.ParseError(err))
-			json.NewEncoder(w).Encode(map[string]interface{}{"result": "error", "message": "wrong input"})
-			return
+		var userDto dto.UserSignInDto
+		if err := json.NewDecoder(r.Body).Decode(&userDto); err != nil {
+			return err
 		}
-		err := handlers.Service.SignInUser(&user)
+		User, err := userDto.IntoUser()
 		if err != nil {
-			w.WriteHeader(validation.ParseError(err))
-			json.NewEncoder(w).Encode(map[string]interface{}{"result": "error", "message": err.Error()})
-			return
+			return err
+		}
+		if err := handlers.Service.SignInUser(r.Context(), User); err != nil {
+			return err
 		}
 		http.SetCookie(w, &http.Cookie{
 			Name:     "Refresh-token",
-			Value:    user.RefreshToken,
-			Expires:  user.ExpirationTime,
+			Value:    User.RefreshToken,
+			Expires:  User.ExpirationTime,
 			HttpOnly: true,
-			Secure:   false, // set true on realese
+			Secure:   handlers.Config.Secure,
 			SameSite: http.SameSiteStrictMode,
 			Path:     "/",
 		})
 		http.SetCookie(w, &http.Cookie{
 			Name:     "Access-token",
-			Value:    user.Jwt,
+			Value:    User.Jwt,
 			MaxAge:   300,
 			HttpOnly: true,
-			Secure:   false, // set true on realese
+			Secure:   handlers.Config.Secure,
 			SameSite: http.SameSiteStrictMode,
 			Path:     "/",
 		})
-		w.Header().Set("X-CSRF-Token", user.CsrfToken)
+		w.Header().Set("X-CSRF-Token", User.CsrfToken)
 		w.WriteHeader(http.StatusOK)
 		json.NewEncoder(w).Encode(map[string]interface{}{"result": "ok"})
-	})
+		return nil
+	}
 }
 
-func (handlers *Handlers) VerifyHandler() http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+func (handlers *Handlers) VerifyHandler() apierror.UserHandler {
+	return func(w http.ResponseWriter, r *http.Request) error {
 		w.Header().Set("Content-type", "application/json")
 		var user models.User
 		vars := mux.Vars(r)
 		user.VerificationCode = vars["code"]
-		err := handlers.Service.VerifyUser(&user)
-		if err != nil {
-			w.WriteHeader(validation.ParseError(err))
-			json.NewEncoder(w).Encode(map[string]interface{}{"result": "error", "message": err.Error()})
-			return
+		if err := handlers.Service.VerifyUser(r.Context(), &user); err != nil {
+			return err
 		}
 		http.SetCookie(w, &http.Cookie{
 			Name:     "Refresh-token",
 			Value:    user.RefreshToken,
 			Expires:  user.ExpirationTime,
 			HttpOnly: true,
-			Secure:   false, // set true on realese
+			Secure:   handlers.Config.Secure,
 			SameSite: http.SameSiteStrictMode,
 			Path:     "/",
 		})
@@ -107,57 +106,54 @@ func (handlers *Handlers) VerifyHandler() http.Handler {
 			Value:    user.Jwt,
 			MaxAge:   300,
 			HttpOnly: true,
-			Secure:   false, // set true on realese
+			Secure:   handlers.Config.Secure,
 			SameSite: http.SameSiteStrictMode,
 			Path:     "/",
 		})
 		w.Header().Set("X-CSRF-Token", user.CsrfToken)
 		w.WriteHeader(http.StatusOK)
 		json.NewEncoder(w).Encode(map[string]interface{}{"result": "ok"})
-	})
+		return nil
+	}
 }
 
-func (handlers *Handlers) GetTokenHandler() http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+func (handlers *Handlers) GetTokenHandler() apierror.UserHandler {
+	return func(w http.ResponseWriter, r *http.Request) error {
 		w.Header().Set("Content-type", "application/json")
 		cookie, err := r.Cookie("Refresh-token")
 		if err != nil {
-			w.WriteHeader(validation.ParseError(err))
-			json.NewEncoder(w).Encode(map[string]interface{}{"result": "error", "message": "cooike isn't present"})
-			return
+			return err
 		}
 		user := new(models.User)
 		user.RefreshToken = cookie.Value
-		err = handlers.Service.GetAccessToken(user)
-		if err != nil {
-			w.WriteHeader(validation.ParseError(err))
-			json.NewEncoder(w).Encode(map[string]interface{}{"result": "error", "message": err.Error()})
-			return
+		if err := handlers.Service.GetAccessToken(r.Context(), user); err != nil {
+			return err
 		}
 		http.SetCookie(w, &http.Cookie{
 			Name:     "Access-token",
 			Value:    user.Jwt,
 			MaxAge:   300,
 			HttpOnly: true,
-			Secure:   false, // set true on realese
+			Secure:   handlers.Config.Secure,
 			SameSite: http.SameSiteStrictMode,
 			Path:     "/",
 		})
 		w.Header().Set("X-CSRF-Token", user.CsrfToken)
 		w.WriteHeader(http.StatusOK)
 		json.NewEncoder(w).Encode(map[string]interface{}{"result": "ok"})
-	})
+		return nil
+	}
 }
 
-func (handlers *Handlers) LogOutHandler() http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+func (handlers *Handlers) LogOutHandler() apierror.UserHandler {
+	return func(w http.ResponseWriter, r *http.Request) error {
 		w.Header().Set("Content-type", "application/json")
 		http.SetCookie(w, &http.Cookie{
 			Name:     "Refresh-token",
 			Value:    "",
 			MaxAge:   -1,
 			HttpOnly: true,
-			Secure:   false, // set true on realese
+			Secure:   handlers.Config.Secure,
 			SameSite: http.SameSiteStrictMode,
 			Path:     "/",
 		})
@@ -166,19 +162,21 @@ func (handlers *Handlers) LogOutHandler() http.Handler {
 			Value:    "",
 			MaxAge:   -1,
 			HttpOnly: true,
-			Secure:   false, // set true on realese
+			Secure:   handlers.Config.Secure,
 			SameSite: http.SameSiteStrictMode,
 			Path:     "/",
 		})
 		w.WriteHeader(http.StatusOK)
 		json.NewEncoder(w).Encode(map[string]interface{}{"result": "ok"})
-	})
+		return nil
+	}
 }
 
-func NewHandlers(service service.Service, config config.Config, Logger *zerolog.Logger) *Handlers {
+func NewHandlers(service service.Service, config *config.Config, ApiError *apierror.ApiError) *Handlers {
 	handlers := new(Handlers)
-	handlers.Logger = Logger
+	handlers.ApiError = ApiError
 	handlers.Service = service
+	handlers.Config = config
 	handlers.Router = mux.NewRouter()
 	handlers.Cors = cors.New(cors.Options{
 		AllowedOrigins: strings.Split(config.AllowedOrigins, ","),
@@ -186,12 +184,12 @@ func NewHandlers(service service.Service, config config.Config, Logger *zerolog.
 		MaxAge:         5,
 		AllowedMethods: []string{"POST", "GET", "PUT", "DELETE", "OPTIONS"},
 	})
-	handlers.Router.Handle("/user", handlers.SignUpHandler()).Methods("POST").Schemes("http")
+	handlers.Router.Handle("/user", handlers.ApiError.ErrorMiddleWare(handlers.SignUpHandler())).Methods("POST").Schemes("http")
 	user := handlers.Router.PathPrefix("/user").Subrouter()
-	user.Handle("/auth", handlers.SignInHandler()).Methods("POST").Schemes("http")
-	user.Handle("/token", handlers.GetTokenHandler()).Methods("GET").Schemes("http")
-	user.Handle("/verify/{code:.{16}}", handlers.VerifyHandler()).Methods("POST").Schemes("http")
-	user.Handle("/logout", handlers.LogOutHandler()).Methods("GET").Schemes("http")
+	user.Handle("/auth", handlers.ApiError.ErrorMiddleWare(handlers.SignInHandler())).Methods("POST").Schemes("http")
+	user.Handle("/token", handlers.ApiError.ErrorMiddleWare(handlers.GetTokenHandler())).Methods("GET").Schemes("http")
+	user.Handle("/verify/{code:.{16}}", handlers.ApiError.ErrorMiddleWare(handlers.VerifyHandler())).Methods("POST").Schemes("http")
+	user.Handle("/logout", handlers.ApiError.ErrorMiddleWare(handlers.LogOutHandler())).Methods("GET").Schemes("http")
 
 	return handlers
 }

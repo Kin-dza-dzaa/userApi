@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 	"time"
+
 	config "github.com/Kin-dza-dzaa/userApi/configs"
 	"github.com/Kin-dza-dzaa/userApi/internal/models"
 	"github.com/google/uuid"
@@ -110,7 +111,7 @@ func (suite *RepositorySuite) SetupSuite() {
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
-	suite.repository = NewRepository(suite.pool, &logger)
+	suite.repository = NewRepository(suite.pool)
 }
 
 func (suite *RepositorySuite) TearDownSuite() {
@@ -126,7 +127,7 @@ func (suite *RepositorySuite) TearDownSuite() {
 func (suite *RepositorySuite) Test() {
 	for _, v := range testSlice {
 		if v.method == "AddUser" {
-			err := suite.repository.AddUser(&v.user)
+			err := suite.repository.AddUser(context.TODO(), &v.user)
 			if v.errorExpected {
 				suite.EqualError(err, v.err)
 			} else {
@@ -134,7 +135,7 @@ func (suite *RepositorySuite) Test() {
 			}
 		}
 		if v.method == "UpdateCredentials" {
-			err := suite.repository.UpdateCredentials(&v.user)
+			err := suite.repository.UpdateCredentials(context.TODO(), &v.user)
 			if v.errorExpected {
 				suite.EqualError(err, v.err)
 			} else {
@@ -142,7 +143,7 @@ func (suite *RepositorySuite) Test() {
 			}
 		}
 		if v.method == "IfUnverifiedUserExists" {
-			res, err := suite.repository.IfUnverifiedUserExists(&v.user)
+			res, err := suite.repository.IfUnverifiedUserExists(context.TODO(), &v.user)
 			if v.errorExpected {
 				suite.EqualError(err, v.err)
 			} else {
@@ -151,7 +152,7 @@ func (suite *RepositorySuite) Test() {
 			}
 		}
 		if v.method == "VerifyUser" {
-			err := suite.repository.VerifyUser(&v.user)
+			err := suite.repository.VerifyUser(context.TODO(), &v.user)
 			if v.errorExpected {
 				suite.EqualError(err, v.err)
 			} else {
@@ -159,7 +160,7 @@ func (suite *RepositorySuite) Test() {
 			}
 		}
 		if v.method == "GetUUid" {
-			err := suite.repository.GetUUid(&v.user)
+			err := suite.repository.GetUUid(context.TODO(), &v.user)
 			if v.errorExpected {
 				suite.EqualError(err, v.err)
 			} else {
@@ -167,7 +168,7 @@ func (suite *RepositorySuite) Test() {
 			}
 		}
 		if v.method == "GetVerifiedUser" {
-			_, err := suite.repository.GetVerifiedUser(&v.user)
+			_, err := suite.repository.GetVerifiedUser(context.TODO(), &v.user)
 			if v.errorExpected {
 				suite.EqualError(err, v.err)
 			} else {
@@ -175,7 +176,7 @@ func (suite *RepositorySuite) Test() {
 			}
 		}
 		if v.method == "UpdateRefreshToken" {
-			err := suite.repository.UpdateRefreshToken(&v.user)
+			err := suite.repository.UpdateRefreshToken(context.TODO(), &v.user)
 			if v.errorExpected {
 				suite.EqualError(err, v.err)
 			} else {

@@ -3,6 +3,8 @@
 package mocks
 
 import (
+	context "context"
+
 	models "github.com/Kin-dza-dzaa/userApi/internal/models"
 	mock "github.com/stretchr/testify/mock"
 )
@@ -12,13 +14,13 @@ type Service struct {
 	mock.Mock
 }
 
-// GetAccessToken provides a mock function with given fields: user
-func (_m *Service) GetAccessToken(user *models.User) error {
-	ret := _m.Called(user)
+// GetAccessToken provides a mock function with given fields: ctx, user
+func (_m *Service) GetAccessToken(ctx context.Context, user *models.User) error {
+	ret := _m.Called(ctx, user)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(*models.User) error); ok {
-		r0 = rf(user)
+	if rf, ok := ret.Get(0).(func(context.Context, *models.User) error); ok {
+		r0 = rf(ctx, user)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -26,13 +28,13 @@ func (_m *Service) GetAccessToken(user *models.User) error {
 	return r0
 }
 
-// SignInUser provides a mock function with given fields: user
-func (_m *Service) SignInUser(user *models.User) error {
-	ret := _m.Called(user)
+// SignInUser provides a mock function with given fields: ctx, user
+func (_m *Service) SignInUser(ctx context.Context, user *models.User) error {
+	ret := _m.Called(ctx, user)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(*models.User) error); ok {
-		r0 = rf(user)
+	if rf, ok := ret.Get(0).(func(context.Context, *models.User) error); ok {
+		r0 = rf(ctx, user)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -40,13 +42,13 @@ func (_m *Service) SignInUser(user *models.User) error {
 	return r0
 }
 
-// SignUpUser provides a mock function with given fields: user
-func (_m *Service) SignUpUser(user *models.User) error {
-	ret := _m.Called(user)
+// SignUpUser provides a mock function with given fields: ctx, user
+func (_m *Service) SignUpUser(ctx context.Context, user *models.User) error {
+	ret := _m.Called(ctx, user)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(*models.User) error); ok {
-		r0 = rf(user)
+	if rf, ok := ret.Get(0).(func(context.Context, *models.User) error); ok {
+		r0 = rf(ctx, user)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -54,13 +56,13 @@ func (_m *Service) SignUpUser(user *models.User) error {
 	return r0
 }
 
-// VerifyUser provides a mock function with given fields: user
-func (_m *Service) VerifyUser(user *models.User) error {
-	ret := _m.Called(user)
+// VerifyUser provides a mock function with given fields: ctx, user
+func (_m *Service) VerifyUser(ctx context.Context, user *models.User) error {
+	ret := _m.Called(ctx, user)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(*models.User) error); ok {
-		r0 = rf(user)
+	if rf, ok := ret.Get(0).(func(context.Context, *models.User) error); ok {
+		r0 = rf(ctx, user)
 	} else {
 		r0 = ret.Error(0)
 	}

@@ -6,13 +6,14 @@ import (
 )
 
 type Config struct{
-	DbUrl     string		`mapstructure:"DB_URL"`
-	Adress    string		`mapstructure:"ADRESS"`
-	JWTString string		`mapstructure:"JWT_SECURE_STRING"`
-	AllowedOrigins string	`mapstructure:"ALLOWED_ORIGINS"`
-	SmtpUserName string		`mapstructure:"SMTP_USER_NAME"`
-	SmtpPassword string		`mapstructure:"SMTP_PASSWORD"`
-	TemplateLocation string	`mapstructure:"TEMPLATE_LOCATION"`
+	DbUrl            string		`mapstructure:"DB_URL"`
+	Adress           string		`mapstructure:"ADRESS"`
+	JWTString 		 string		`mapstructure:"JWT_SECURE_STRING"`
+	AllowedOrigins 	 string		`mapstructure:"ALLOWED_ORIGINS"`
+	SmtpUserName 	 string		`mapstructure:"SMTP_USER_NAME"`
+	SmtpPassword     string		`mapstructure:"SMTP_PASSWORD"`
+	TemplateLocation string		`mapstructure:"TEMPLATE_LOCATION"`
+	Secure           bool		`mapstructure:"SECURE"`
 }
 
 func ReadConfig(logger *zerolog.Logger) (*Config, error) {

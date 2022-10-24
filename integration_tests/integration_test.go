@@ -1,4 +1,3 @@
-// +build integration
 package integration_test
 
 import (
@@ -8,10 +7,9 @@ import (
 	"net/http"
 	"testing"
 	"time"
-
 	config "github.com/Kin-dza-dzaa/userApi/configs"
+	"github.com/Kin-dza-dzaa/userApi/internal/apierror"
 	"github.com/Kin-dza-dzaa/userApi/internal/models"
-	"github.com/Kin-dza-dzaa/userApi/internal/validation"
 	"github.com/Kin-dza-dzaa/userApi/pkg/handlers"
 	"github.com/Kin-dza-dzaa/userApi/pkg/repositories"
 	"github.com/Kin-dza-dzaa/userApi/pkg/service"
@@ -37,11 +35,7 @@ type IntegrationTestSuite struct {
 }
 
 func (suite *IntegrationTestSuite) SetupSuite() {
-	validator, err := validation.InitValidators()
-	if err != nil {
-		suite.FailNow(err.Error())
-	}
-	logger := zerolog.New(zerolog.NewConsoleWriter()).With().Timestamp().Caller().Logger()
+	logger := zerolog.New(nil).With().Timestamp().Caller().Logger()
 	config, err := config.ReadConfig(&logger)
 	if err != nil {
 		suite.FailNow(err.Error())
@@ -50,9 +44,10 @@ func (suite *IntegrationTestSuite) SetupSuite() {
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
-	MyRepository := repository.NewRepository(pool, &logger)
-	MyService := service.NewService(MyRepository, config, validator, &logger)
-	MyHandlers := handlers.NewHandlers(MyService, *config, &logger)
+	ApiError := apierror.NewApiError(&logger)
+	MyRepository := repository.NewRepository(pool)
+	MyService := service.NewService(MyRepository, config)
+	MyHandlers := handlers.NewHandlers(MyService, config, ApiError)
 	suite.server = &http.Server{
 		Addr: config.Adress,
 		WriteTimeout: 15 * time.Second,

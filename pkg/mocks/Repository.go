@@ -3,6 +3,8 @@
 package mocks
 
 import (
+	context "context"
+
 	models "github.com/Kin-dza-dzaa/userApi/internal/models"
 	mock "github.com/stretchr/testify/mock"
 )
@@ -12,13 +14,13 @@ type Repository struct {
 	mock.Mock
 }
 
-// AddUser provides a mock function with given fields: user
-func (_m *Repository) AddUser(user *models.User) error {
-	ret := _m.Called(user)
+// AddUser provides a mock function with given fields: ctx, user
+func (_m *Repository) AddUser(ctx context.Context, user *models.User) error {
+	ret := _m.Called(ctx, user)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(*models.User) error); ok {
-		r0 = rf(user)
+	if rf, ok := ret.Get(0).(func(context.Context, *models.User) error); ok {
+		r0 = rf(ctx, user)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -26,13 +28,13 @@ func (_m *Repository) AddUser(user *models.User) error {
 	return r0
 }
 
-// GetUUid provides a mock function with given fields: user
-func (_m *Repository) GetUUid(user *models.User) error {
-	ret := _m.Called(user)
+// GetUUid provides a mock function with given fields: ctx, user
+func (_m *Repository) GetUUid(ctx context.Context, user *models.User) error {
+	ret := _m.Called(ctx, user)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(*models.User) error); ok {
-		r0 = rf(user)
+	if rf, ok := ret.Get(0).(func(context.Context, *models.User) error); ok {
+		r0 = rf(ctx, user)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -40,13 +42,13 @@ func (_m *Repository) GetUUid(user *models.User) error {
 	return r0
 }
 
-// GetVerifiedUser provides a mock function with given fields: user
-func (_m *Repository) GetVerifiedUser(user *models.User) (*models.User, error) {
-	ret := _m.Called(user)
+// GetVerifiedUser provides a mock function with given fields: ctx, user
+func (_m *Repository) GetVerifiedUser(ctx context.Context, user *models.User) (*models.User, error) {
+	ret := _m.Called(ctx, user)
 
 	var r0 *models.User
-	if rf, ok := ret.Get(0).(func(*models.User) *models.User); ok {
-		r0 = rf(user)
+	if rf, ok := ret.Get(0).(func(context.Context, *models.User) *models.User); ok {
+		r0 = rf(ctx, user)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*models.User)
@@ -54,8 +56,8 @@ func (_m *Repository) GetVerifiedUser(user *models.User) (*models.User, error) {
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(*models.User) error); ok {
-		r1 = rf(user)
+	if rf, ok := ret.Get(1).(func(context.Context, *models.User) error); ok {
+		r1 = rf(ctx, user)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -63,20 +65,20 @@ func (_m *Repository) GetVerifiedUser(user *models.User) (*models.User, error) {
 	return r0, r1
 }
 
-// IfUnverifiedUserExists provides a mock function with given fields: user
-func (_m *Repository) IfUnverifiedUserExists(user *models.User) (bool, error) {
-	ret := _m.Called(user)
+// IfUnverifiedUserExists provides a mock function with given fields: ctx, user
+func (_m *Repository) IfUnverifiedUserExists(ctx context.Context, user *models.User) (bool, error) {
+	ret := _m.Called(ctx, user)
 
 	var r0 bool
-	if rf, ok := ret.Get(0).(func(*models.User) bool); ok {
-		r0 = rf(user)
+	if rf, ok := ret.Get(0).(func(context.Context, *models.User) bool); ok {
+		r0 = rf(ctx, user)
 	} else {
 		r0 = ret.Get(0).(bool)
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(*models.User) error); ok {
-		r1 = rf(user)
+	if rf, ok := ret.Get(1).(func(context.Context, *models.User) error); ok {
+		r1 = rf(ctx, user)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -84,13 +86,13 @@ func (_m *Repository) IfUnverifiedUserExists(user *models.User) (bool, error) {
 	return r0, r1
 }
 
-// UpdateCredentials provides a mock function with given fields: user
-func (_m *Repository) UpdateCredentials(user *models.User) error {
-	ret := _m.Called(user)
+// UpdateCredentials provides a mock function with given fields: ctx, user
+func (_m *Repository) UpdateCredentials(ctx context.Context, user *models.User) error {
+	ret := _m.Called(ctx, user)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(*models.User) error); ok {
-		r0 = rf(user)
+	if rf, ok := ret.Get(0).(func(context.Context, *models.User) error); ok {
+		r0 = rf(ctx, user)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -98,13 +100,13 @@ func (_m *Repository) UpdateCredentials(user *models.User) error {
 	return r0
 }
 
-// UpdateRefreshToken provides a mock function with given fields: user
-func (_m *Repository) UpdateRefreshToken(user *models.User) error {
-	ret := _m.Called(user)
+// UpdateRefreshToken provides a mock function with given fields: ctx, user
+func (_m *Repository) UpdateRefreshToken(ctx context.Context, user *models.User) error {
+	ret := _m.Called(ctx, user)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(*models.User) error); ok {
-		r0 = rf(user)
+	if rf, ok := ret.Get(0).(func(context.Context, *models.User) error); ok {
+		r0 = rf(ctx, user)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -112,13 +114,13 @@ func (_m *Repository) UpdateRefreshToken(user *models.User) error {
 	return r0
 }
 
-// VerifyUser provides a mock function with given fields: user
-func (_m *Repository) VerifyUser(user *models.User) error {
-	ret := _m.Called(user)
+// VerifyUser provides a mock function with given fields: ctx, user
+func (_m *Repository) VerifyUser(ctx context.Context, user *models.User) error {
+	ret := _m.Called(ctx, user)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(*models.User) error); ok {
-		r0 = rf(user)
+	if rf, ok := ret.Get(0).(func(context.Context, *models.User) error); ok {
+		r0 = rf(ctx, user)
 	} else {
 		r0 = ret.Error(0)
 	}

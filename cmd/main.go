@@ -6,9 +6,8 @@ import (
 	"net/http"
 	"os"
 	"time"
-
 	config "github.com/Kin-dza-dzaa/userApi/configs"
-	"github.com/Kin-dza-dzaa/userApi/internal/validation"
+	"github.com/Kin-dza-dzaa/userApi/internal/apierror"
 	"github.com/Kin-dza-dzaa/userApi/pkg/handlers"
 	repository "github.com/Kin-dza-dzaa/userApi/pkg/repositories"
 	"github.com/Kin-dza-dzaa/userApi/pkg/service"
@@ -26,13 +25,10 @@ func main() {
 	if err != nil {
 		logger.Fatal().Msg(err.Error())
 	}
-	validator, err := validation.InitValidators()
-	if err != nil {
-		logger.Fatal().Msg(err.Error())
-	}
-	repository := repository.NewRepository(pool, &logger)
-	service := service.NewService(repository, config, validator, &logger)
-	MyHandlers := handlers.NewHandlers(service, *config, &logger)
+	ApiError := apierror.NewApiError(&logger)
+	repository := repository.NewRepository(pool)
+	service := service.NewService(repository, config)
+	MyHandlers := handlers.NewHandlers(service, config, ApiError)
 	srv := &http.Server{
 		Addr:         config.Adress,
 		WriteTimeout: 15 * time.Second,
