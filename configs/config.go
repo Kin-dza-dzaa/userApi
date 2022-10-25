@@ -14,6 +14,7 @@ type Config struct{
 	SmtpPassword     string		`mapstructure:"SMTP_PASSWORD"`
 	TemplateLocation string		`mapstructure:"TEMPLATE_LOCATION"`
 	Secure           bool		`mapstructure:"SECURE"`
+	LocalDbUrlTest   string		`mapstructure:"LOCAL_DB_URL_TEST"`
 }
 
 func ReadConfig(logger *zerolog.Logger) (*Config, error) {

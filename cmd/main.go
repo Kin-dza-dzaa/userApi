@@ -42,4 +42,7 @@ func main() {
 		}
 	}()
 	<-handlers.StopHTTPServerChan
+	if err := srv.Shutdown(context.Background()); err != nil {
+		logger.Fatal().Msg(err.Error())
+	}
 }

@@ -7,9 +7,10 @@ import (
 	"net/http"
 	"testing"
 	"time"
+
 	config "github.com/Kin-dza-dzaa/userApi/configs"
 	"github.com/Kin-dza-dzaa/userApi/internal/apierror"
-	"github.com/Kin-dza-dzaa/userApi/internal/models"
+	"github.com/Kin-dza-dzaa/userApi/internal/dto"
 	"github.com/Kin-dza-dzaa/userApi/pkg/handlers"
 	"github.com/Kin-dza-dzaa/userApi/pkg/repositories"
 	"github.com/Kin-dza-dzaa/userApi/pkg/service"
@@ -18,20 +19,14 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
-type TestData struct {
-	user models.User
-	expected response
-	status int
-}
-
-type response struct {
-	Message string		`json:"message,omitempty"`
-	Result string		`json:"result"`
-}
+const (
+	queryDeleteUsers = "DELETE FROM USERS;"
+)
 
 type IntegrationTestSuite struct {
 	suite.Suite
 	server *http.Server
+	pool *pgxpool.Pool
 }
 
 func (suite *IntegrationTestSuite) SetupSuite() {
@@ -40,10 +35,12 @@ func (suite *IntegrationTestSuite) SetupSuite() {
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
-	pool ,err := pgxpool.Connect(context.TODO(), config.DbUrl)
+	config.TemplateLocation = "./../internal/templates/response_template.html"
+	pool ,err := pgxpool.Connect(context.TODO(), config.LocalDbUrlTest)
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
+	suite.pool = pool
 	ApiError := apierror.NewApiError(&logger)
 	MyRepository := repository.NewRepository(pool)
 	MyService := service.NewService(MyRepository, config)
@@ -61,154 +58,63 @@ func (suite *IntegrationTestSuite) SetupSuite() {
 
 func (suite *IntegrationTestSuite) TearDownSuite() {
 	if err := suite.server.Shutdown(context.TODO()); err != nil {
-		suite.Fail(err.Error())
+		suite.FailNow(err.Error())
+	}
+}
+
+func (suite *IntegrationTestSuite) TearDownTest() {
+	if _, err := suite.pool.Exec(context.TODO(), queryDeleteUsers); err != nil {
+		suite.FailNow(err.Error())
 	}
 }
 
 func (suite *IntegrationTestSuite) TestSignUp() {
-	var testSlice []TestData = []TestData{
+	testCases := []struct{
+		input 		*dto.UserSignUpDto
+		result 		apierror.ErrorStruct
+	}{
 		{
-			user: models.User{
-				UserName: "testUser",
-				Email: "testuser@gmail.com",
-				Password: "12345Qwerty",
+			input: &dto.UserSignUpDto{
+				Email: "testEmail@gmail.com",
+				UserName: "testUserValid",
+				Password: "12345ValidPassword",
 			},
-			expected: response{
+			result: apierror.ErrorStruct{
 				Result: "ok",
 				Message: "email was sent",
 			},
-			status: http.StatusOK,
-		},		
-		{
-			user: models.User{
-				UserName: "testUser",
-				Email: "testuser@gmail.com",
-				Password: "12345Qwerty",
-			},
-			expected: response{
-				Result: "ok",
-				Message: "email was sent",
-			},
-			status: http.StatusOK,
 		},
 		{
-			user: models.User{
-				Password: "12345Qwerty",
-			},
-			expected: response{
+			input: nil,
+			result: apierror.ErrorStruct{
 				Result: "error",
-				Message: "invalid credentials",
+				Message: dto.ErrInvalidCredentials.Error(),
 			},
-			status: http.StatusBadRequest,
 		},
 		{
-			user: models.User{
-			},
-			expected: response{
+			input: &dto.UserSignUpDto{},
+			result: apierror.ErrorStruct{
 				Result: "error",
-				Message: "invalid credentials",
+				Message: dto.ErrInvalidCredentials.Error(),
 			},
-			status: http.StatusBadRequest,
-		},
-		{
-			user: models.User{		
-				UserName: "testUser",
-				Password: "12345Qwerty",
-			},
-			expected: response{
-				Result: "error",
-				Message: "invalid credentials",
-			},
-			status: http.StatusBadRequest,
-		},
-		{
-			user: models.User{		
-				Email: "testuser@gmail.com",
-				Password: "12345Qwerty",
-			},
-			expected: response{
-				Result: "error",
-				Message: "invalid credentials",
-			},
-			status: http.StatusBadRequest,
-		},
-		{
-			user: models.User{		
-				UserName: "",
-				Email: "",
-				Password: "12345Qwerty",
-			},
-			expected: response{
-				Result: "error",
-				Message: "invalid credentials",
-			},
-			status: http.StatusBadRequest,
-		},
-		{
-			user: models.User{		
-				UserName: "",
-				Email: "testuser@gmail.com",
-				Password: "12345Qwerty",
-			},
-			expected: response{
-				Result: "error",
-				Message: "invalid credentials",
-			},
-			status: http.StatusBadRequest,
-		},
-		{
-			user: models.User{		
-				UserName: "testUser",
-				Email: "",
-				Password: "12345Qwerty",
-			},
-			expected: response{
-				Result: "error",
-				Message: "invalid credentials",
-			},
-			status: http.StatusBadRequest,
-		},
-		{
-			user: models.User{		
-				UserName: "testUser",
-				Email: "testuser@gmail.com",
-				Password: "",
-			},
-			expected: response{
-				Result: "error",
-				Message: "invalid credentials",
-			},
-			status: http.StatusBadRequest,
-		},
-		{
-			user: models.User{		
-				UserName: "",
-				Email: "",
-				Password: "",
-			},
-			expected: response{
-				Result: "error",
-				Message: "invalid credentials",
-			},
-			status: http.StatusBadRequest,
 		},
 	}
-	for _, v := range testSlice {
-		byteData, err := json.Marshal(v.user)
-		if err != nil {
-			suite.FailNow(err.Error())
-		}
-		res, err := http.Post("http://localhost:8001/user", "application/json", bytes.NewReader(byteData))
-		if err != nil {
-			suite.FailNow(err.Error())
-		}
-		var responseStruct response
-		if err := json.NewDecoder(res.Body).Decode(&responseStruct); err != nil {
-			suite.FailNow(err.Error())
-		}
-		defer res.Body.Close()
-		suite.Equal(v.expected, responseStruct)
-		suite.Equal(v.status, res.StatusCode)
+	for _, tc := range testCases {
+		suite.T().Run("TestSignUp", func(t *testing.T) {
+			byteData, err := json.Marshal(tc.input)
+			if err != nil {
+				suite.FailNow(err.Error())
+			}
+			res, err := http.Post("http://localhost:8001/user", "application/json", bytes.NewReader(byteData))
+			if err != nil {
+				suite.FailNow(err.Error())
+			}
+			var response apierror.ErrorStruct
+			if err := json.NewDecoder(res.Body).Decode(&response); err != nil {
+				suite.FailNow(err.Error())
+			}
+			suite.Equal(tc.result, response)
+		})
 	}
 }
 
