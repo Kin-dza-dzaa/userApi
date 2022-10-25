@@ -3,11 +3,11 @@ package repository
 import (
 	"context"
 	"errors"
+	"time"
 	"github.com/Kin-dza-dzaa/userApi/internal/models"
 	"github.com/google/uuid"
+	"github.com/jackc/pgconn"
 	"github.com/jackc/pgx/v4"
-	"github.com/jackc/pgx/v4/pgxpool"
-	"time"
 )
 
 const (
@@ -27,7 +27,7 @@ var (
 )
 
 type UserRepositry struct {
-	pool   *pgxpool.Pool
+	pool dbconn
 }
 
 func (repository *UserRepositry) AddUser(ctx context.Context, user *models.User) error {
@@ -95,8 +95,16 @@ func (repository *UserRepositry) IfUnverifiedUserExists(ctx context.Context, use
 	return result, nil
 }
 
-func NewUserRepository(pool *pgxpool.Pool) *UserRepositry {
+func NewUserRepository(pool dbconn) *UserRepositry {
 	return &UserRepositry{
 		pool: pool,
 	}
+}
+
+// for tests
+type dbconn interface {
+	Begin(ctx context.Context) (pgx.Tx, error)
+	Exec(ctx context.Context, sql string, arguments ...interface{}) (pgconn.CommandTag, error)
+	Query(ctx context.Context, sql string, optionsAndArgs ...interface{}) (pgx.Rows, error)
+	QueryRow(ctx context.Context, sql string, optionsAndArgs ...interface{}) pgx.Row
 }

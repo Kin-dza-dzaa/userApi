@@ -14,8 +14,6 @@ CREATE TABLE IF NOT EXISTS users(
     registration_date TIMESTAMP                                                             NOT NULL, 
     refresh_token     TEXT,
     expiration_time   TIMESTAMP,  
-    verification_code TEXT                                                                  NOT NULL,
-    verified          BOOL                                                                  NOT NULL,
     UNIQUE (id),
     UNIQUE(user_name),
     UNIQUE (email)

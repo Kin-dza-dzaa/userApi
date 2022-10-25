@@ -63,22 +63,20 @@ func (suite *TestSuite) TestMiddleware() {
 		},
 	}	
 	for _, tc := range testCases {
-		r := httptest.NewRequest("POST", "/test", nil)
-		w := httptest.NewRecorder()
-		suite.apiError.ErrorMiddleWare(func(w http.ResponseWriter, r *http.Request) error {return tc.raiseError}).ServeHTTP(w, r)
-		var response ErrorStruct
-		err := json.NewDecoder(w.Body).Decode(&response)
-		if err != nil {
-			suite.FailNow(err.Error())
-		}
-		suite.Equal(*tc.expectedResponse, response)
+		suite.T().Run("MiddleWare", func(t *testing.T) {
+			r := httptest.NewRequest("POST", "/test", nil)
+			w := httptest.NewRecorder()
+			suite.apiError.ErrorMiddleWare(func(w http.ResponseWriter, r *http.Request) error {return tc.raiseError}).ServeHTTP(w, r)
+			var response ErrorStruct
+			err := json.NewDecoder(w.Body).Decode(&response)
+			if err != nil {
+				suite.FailNow(err.Error())
+			}
+			suite.Equal(*tc.expectedResponse, response)
+		})
 	}
 }
 
 func TestMiddleware(t *testing.T) {
 	suite.Run(t, new(TestSuite))
-}
-
-func DummyHandler(w http.ResponseWriter, r *http.Request) error {
-	return nil
 }

@@ -64,18 +64,20 @@ func TestUserSignInDto_IntoUser(t *testing.T) {
 		},
 	}
 	for _, tc := range tests {
-		if tc.wantErr {
-			user, err := tc.dto.IntoUser()
-			if err == nil || user != nil {
-				t.FailNow()
+		t.Run("SignInDto", func(t *testing.T) {
+			if tc.wantErr {
+				user, err := tc.dto.IntoUser()
+				if err == nil || user != nil {
+					t.FailNow()
+				}
+				
+			} else {
+				user, err := tc.dto.IntoUser()
+				if err != nil || !reflect.DeepEqual(tc.want, user) {
+					t.FailNow()
+				}
 			}
-			
-		} else {
-			user, err := tc.dto.IntoUser()
-			if err != nil || !reflect.DeepEqual(tc.want, user) {
-				t.FailNow()
-			}
-		}
+		})
 	}
 }
 
@@ -126,18 +128,20 @@ func TestUserSignUpDto_IntoUser(t *testing.T) {
 		},
 	}
 	for _, tc := range tests {
-		if tc.wantErr {
-			user, err := tc.dto.IntoUser()
-			if err == nil || user != nil {
-				t.FailNow()
+		t.Run("SignUpDto", func(t *testing.T) {
+			if tc.wantErr {
+				user, err := tc.dto.IntoUser()
+				if err == nil || user != nil {
+					t.FailNow()
+				}
+				
+			} else {
+				user, err := tc.dto.IntoUser()
+				if err != nil || !reflect.DeepEqual(tc.want, user) {
+					t.FailNow()
+				}
 			}
-			
-		} else {
-			user, err := tc.dto.IntoUser()
-			if err != nil || !reflect.DeepEqual(tc.want, user) {
-				t.FailNow()
-			}
-		}
+		})
 	}
 }
 

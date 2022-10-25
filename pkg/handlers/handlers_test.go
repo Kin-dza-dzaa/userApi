@@ -83,21 +83,23 @@ func (suite *HandlersSuite) TestSignUpHandler() {
 		},
 	}
 	for _, tc := range testCases {
-		byteData, err := json.Marshal(tc.user)
-		if err != nil {
-			suite.FailNow(err.Error())
-		}
-		r := httptest.NewRequest("POST", "/user", bytes.NewReader(byteData))
-		w := httptest.NewRecorder()
-		if !tc.expectedErr {
-			suite.service.On("SignUpUser", mock.Anything, mock.Anything).Return(nil).Once()
-		}
-		suite.handlers.ApiError.ErrorMiddleWare(suite.handlers.SignUpHandler()).ServeHTTP(w, r)
-		var response apierror.ErrorStruct
-		if err := json.Unmarshal(w.Body.Bytes(), &response); err != nil {
-			suite.FailNow(err.Error())
-		}
-		suite.Equal(tc.response, response)
+		suite.T().Run("SignUpHandler", func(t *testing.T) {
+			byteData, err := json.Marshal(tc.user)
+			if err != nil {
+				suite.FailNow(err.Error())
+			}
+			r := httptest.NewRequest("POST", "/user", bytes.NewReader(byteData))
+			w := httptest.NewRecorder()
+			if !tc.expectedErr {
+				suite.service.On("SignUpUser", mock.Anything, mock.Anything).Return(nil).Once()
+			}
+			suite.handlers.ApiError.ErrorMiddleWare(suite.handlers.SignUpHandler()).ServeHTTP(w, r)
+			var response apierror.ErrorStruct
+			if err := json.Unmarshal(w.Body.Bytes(), &response); err != nil {
+				suite.FailNow(err.Error())
+			}
+			suite.Equal(tc.response, response)
+		})
 	}
 }
 
@@ -149,60 +151,90 @@ func (suite *HandlersSuite) TestSignInHandler() {
 		},
 	}
 	for _, tc := range testSlice {
-		byteData, err := json.Marshal(tc.user)
-		if err != nil {
-			suite.FailNow(err.Error())
-		}
-		r := httptest.NewRequest("POST", "/user", bytes.NewReader(byteData))
-		w := httptest.NewRecorder()
-		if !tc.expectedErr {
-			suite.service.On("SignInUser", mock.Anything, mock.Anything).Return(nil).Once()
-		}
-		suite.handlers.ApiError.ErrorMiddleWare(suite.handlers.SignInHandler()).ServeHTTP(w, r)
-		var response apierror.ErrorStruct
-		if err := json.Unmarshal(w.Body.Bytes(), &response); err != nil {
-			suite.FailNow(err.Error())
-		}
-		suite.Equal(tc.response, response)
+		suite.T().Run("SignInHandler", func(t *testing.T) {
+			byteData, err := json.Marshal(tc.user)
+			if err != nil {
+				suite.FailNow(err.Error())
+			}
+			r := httptest.NewRequest("POST", "/user", bytes.NewReader(byteData))
+			w := httptest.NewRecorder()
+			if !tc.expectedErr {
+				suite.service.On("SignInUser", mock.Anything, mock.Anything).Return(nil).Once()
+			}
+			suite.handlers.ApiError.ErrorMiddleWare(suite.handlers.SignInHandler()).ServeHTTP(w, r)
+			var response apierror.ErrorStruct
+			if err := json.Unmarshal(w.Body.Bytes(), &response); err != nil {
+				suite.FailNow(err.Error())
+			}
+			suite.Equal(tc.response, response)
+		})
 	}
 }
 
 func (suite *HandlersSuite) TestGetTokenHandler() {
-	testCases := []struct{
-		result apierror.ErrorStruct
+	testCases := []struct {
+		result      apierror.ErrorStruct
 		expectedErr bool
 	}{
 		{
 			result: apierror.ErrorStruct{
 				Result: "ok",
-			},	
+			},
 			expectedErr: false,
 		},
 		{
 			result: apierror.ErrorStruct{
-				Result: "error",
+				Result:  "error",
 				Message: "unexpected error",
-			},	
+			},
 			expectedErr: true,
 		},
 	}
 	for _, tc := range testCases {
-		r := httptest.NewRequest("POST", "/user/token", nil)
-		w := httptest.NewRecorder()
-		if !tc.expectedErr {
-			r.AddCookie(&http.Cookie{
-				Name: "Refresh-token",
-			})
-			suite.service.Mock.On("GetAccessToken", mock.Anything, mock.Anything).Return(nil).Once()
-		}
-		suite.handlers.ApiError.ErrorMiddleWare(suite.handlers.GetTokenHandler()).ServeHTTP(w, r)
-		var response apierror.ErrorStruct
-		if err := json.NewDecoder(w.Body).Decode(&response); err != nil {
-			suite.T().FailNow()
-		}
-		suite.Equal(tc.result, response)
+		suite.T().Run("GetTokenHandler", func(t *testing.T) {
+			r := httptest.NewRequest("POST", "/user/token", nil)
+			w := httptest.NewRecorder()
+			if !tc.expectedErr {
+				r.AddCookie(&http.Cookie{
+					Name: "Refresh-token",
+				})
+				suite.service.Mock.On("GetAccessToken", mock.Anything, mock.Anything).Return(nil).Once()
+			}
+			suite.handlers.ApiError.ErrorMiddleWare(suite.handlers.GetTokenHandler()).ServeHTTP(w, r)
+			var response apierror.ErrorStruct
+			if err := json.NewDecoder(w.Body).Decode(&response); err != nil {
+				suite.T().FailNow()
+			}
+			suite.Equal(tc.result, response)
+		})
 	}
 
+}
+
+func (suite *HandlersSuite) TestLogOutHandler() {
+	testCases := []struct {
+		result        apierror.ErrorStruct
+		expectedError bool
+	}{
+		{
+			result: apierror.ErrorStruct{
+				Result: "ok",
+			},
+			expectedError: false,
+		},
+	}
+	for _, tc := range testCases {
+		suite.T().Run("LogOutHandler", func(t *testing.T) {
+			w := httptest.NewRecorder()
+			r := httptest.NewRequest("PoST", "/user/logout", nil)
+			suite.handlers.ApiError.ErrorMiddleWare(suite.handlers.LogOutHandler()).ServeHTTP(w, r)
+			var result apierror.ErrorStruct
+			if err := json.NewDecoder(w.Body).Decode(&result); err != nil {
+				t.FailNow()
+			}
+			suite.Equal(tc.result, result)
+		})
+	}
 }
 
 func TestHandlers(t *testing.T) {

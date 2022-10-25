@@ -4,8 +4,9 @@ import (
 	"bytes"
 	"context"
 	"errors"
-	"html/template"
+	"text/template"
 	"time"
+
 	config "github.com/Kin-dza-dzaa/userApi/configs"
 	"github.com/Kin-dza-dzaa/userApi/internal/models"
 	repository "github.com/Kin-dza-dzaa/userApi/pkg/repositories"
@@ -33,7 +34,6 @@ func (service *UserService) SignUpUser(ctx context.Context, user *models.User) e
 	user.RegistrationTime = time.Now().UTC()
 	user.VerificationCode = uniuri.New()
 	user.Verified = false
-	
 	exists, err := service.repository.IfUnverifiedUserExists(ctx, user)
 	if err != nil {
 		return err
