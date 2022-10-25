@@ -34,14 +34,16 @@ func TestAddUser(t *testing.T) {
 		},
 	}
 	for _, tc := range testCases {
-		ctrl := gomock.NewController(t)
-		defer ctrl.Finish()
-		MockPool := pgxpoolmock.NewMockPgxIface(ctrl)
-		repository := NewUserRepository(MockPool)
-		tc.beforeTest(MockPool, tc.args.user)
-		if err := repository.AddUser(tc.args.ctx, tc.args.user); err != nil {
-			t.FailNow()
-		}
+		t.Run(tc.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+			MockPool := pgxpoolmock.NewMockPgxIface(ctrl)
+			repository := NewUserRepository(MockPool)
+			tc.beforeTest(MockPool, tc.args.user)
+			if err := repository.AddUser(tc.args.ctx, tc.args.user); err != nil {
+				t.FailNow()
+			}
+		})
 	}
 }
 
@@ -67,14 +69,16 @@ func TestUpdateCredentials(t *testing.T) {
 		},
 	}
 	for _, tc := range testCases {
-		ctrl := gomock.NewController(t)
-		defer ctrl.Finish()
-		MockPool := pgxpoolmock.NewMockPgxIface(ctrl)
-		repository := NewUserRepository(MockPool)
-		tc.beforeTest(MockPool, tc.args.user)
-		if err := repository.UpdateCredentials(tc.args.ctx, tc.args.user); err != nil {
-			t.FailNow()
-		}
+		t.Run(tc.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+			MockPool := pgxpoolmock.NewMockPgxIface(ctrl)
+			repository := NewUserRepository(MockPool)
+			tc.beforeTest(MockPool, tc.args.user)
+			if err := repository.UpdateCredentials(tc.args.ctx, tc.args.user); err != nil {
+				t.FailNow()
+			}
+		})
 	}
 }
 
@@ -100,14 +104,16 @@ func TestVerifyUser(t *testing.T) {
 		},
 	}
 	for _, tc := range testCases {
-		ctrl := gomock.NewController(t)
-		defer ctrl.Finish()
-		MockPool := pgxpoolmock.NewMockPgxIface(ctrl)
-		repository := NewUserRepository(MockPool)
-		tc.beforeTest(MockPool, tc.args.user)
-		if err := repository.VerifyUser(tc.args.ctx, tc.args.user); err != ErrWrongVerificationCode {
-			t.FailNow()
-		}
+		t.Run(tc.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+			MockPool := pgxpoolmock.NewMockPgxIface(ctrl)
+			repository := NewUserRepository(MockPool)
+			tc.beforeTest(MockPool, tc.args.user)
+			if err := repository.VerifyUser(tc.args.ctx, tc.args.user); err != ErrWrongVerificationCode {
+				t.FailNow()
+			}
+		})
 	}
 }
 
@@ -133,14 +139,16 @@ func TestGetUUid(t *testing.T) {
 		},
 	}
 	for _, tc := range testCases {
-		ctrl := gomock.NewController(t)
-		defer ctrl.Finish()
-		MockPool := pgxpoolmock.NewMockPgxIface(ctrl)
-		repository := NewUserRepository(MockPool)
-		tc.beforeTest(MockPool, tc.args.user)
-		if err := repository.GetUUid(tc.args.ctx, tc.args.user); err != nil {
-			t.FailNow()
-		}
+		t.Run(tc.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+			MockPool := pgxpoolmock.NewMockPgxIface(ctrl)
+			repository := NewUserRepository(MockPool)
+			tc.beforeTest(MockPool, tc.args.user)
+			if err := repository.GetUUid(tc.args.ctx, tc.args.user); err != nil {
+				t.FailNow()
+			}
+		})
 	}
 }
 
@@ -171,15 +179,17 @@ func TestGetVerifiedUser(t *testing.T) {
 		},
 	}
 	for _, tc := range testCases {
-		ctrl := gomock.NewController(t)
-		defer ctrl.Finish()
-		MockPool := pgxpoolmock.NewMockPgxIface(ctrl)
-		repository := NewUserRepository(MockPool)
-		tc.beforeTest(MockPool, tc.args.user)
-		user, err := repository.GetVerifiedUser(tc.args.ctx, tc.args.user)
-		if !reflect.DeepEqual(user, tc.args.user) || err != nil {
-			t.FailNow()
-		}
+		t.Run(tc.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+			MockPool := pgxpoolmock.NewMockPgxIface(ctrl)
+			repository := NewUserRepository(MockPool)
+			tc.beforeTest(MockPool, tc.args.user)
+			user, err := repository.GetVerifiedUser(tc.args.ctx, tc.args.user)
+			if !reflect.DeepEqual(user, tc.args.user) || err != nil {
+				t.FailNow()
+			}
+		})
 	}
 }
 
@@ -205,14 +215,16 @@ func TestUpdateRefreshToken(t *testing.T) {
 		},
 	}
 	for _, tc := range testCases {
-		ctrl := gomock.NewController(t)
-		defer ctrl.Finish()
-		MockPool := pgxpoolmock.NewMockPgxIface(ctrl)
-		repository := NewUserRepository(MockPool)
-		tc.beforeTest(MockPool, tc.args.user)
-		if err := repository.UpdateRefreshToken(tc.args.ctx, tc.args.user); err != nil {
-			t.FailNow()
-		}
+		t.Run(tc.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+			MockPool := pgxpoolmock.NewMockPgxIface(ctrl)
+			repository := NewUserRepository(MockPool)
+			tc.beforeTest(MockPool, tc.args.user)
+			if err := repository.UpdateRefreshToken(tc.args.ctx, tc.args.user); err != nil {
+				t.FailNow()
+			}
+		})
 	}
 }
 
@@ -238,14 +250,16 @@ func TestIfUnverifiedUserExists(t *testing.T) {
 		},
 	}
 	for _, tc := range testCases {
-		ctrl := gomock.NewController(t)
-		defer ctrl.Finish()
-		MockPool := pgxpoolmock.NewMockPgxIface(ctrl)
-		repository := NewUserRepository(MockPool)
-		tc.beforeTest(MockPool, tc.args.user)
-		_, err := repository.IfUnverifiedUserExists(tc.args.ctx, tc.args.user)
-		if err != nil {
-			t.FailNow()
-		}
+		t.Run(tc.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+			MockPool := pgxpoolmock.NewMockPgxIface(ctrl)
+			repository := NewUserRepository(MockPool)
+			tc.beforeTest(MockPool, tc.args.user)
+			_, err := repository.IfUnverifiedUserExists(tc.args.ctx, tc.args.user)
+			if err != nil {
+				t.FailNow()
+			}
+		})
 	}
 }

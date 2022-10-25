@@ -83,11 +83,13 @@ func TestUserSignInDto_IntoUser(t *testing.T) {
 
 func TestUserSignUpDto_IntoUser(t *testing.T) {
 	tests := []struct {
+		name string
 		dto     UserSignUpDto
 		want    *models.User
 		wantErr bool
 	}{
 		{
+			name: "good_user",
 			dto: UserSignUpDto{
 				Email: "testemail@gmail.com",
 				UserName: "TestUser",
@@ -101,6 +103,7 @@ func TestUserSignUpDto_IntoUser(t *testing.T) {
 			wantErr: false,
 		},
 		{
+			name: "bad_email_and_password",
 			dto: UserSignUpDto{
 				Email: "bad",
 				Password: "bad",
@@ -109,6 +112,7 @@ func TestUserSignUpDto_IntoUser(t *testing.T) {
 			wantErr: true,
 		},
 		{
+			name: "empty_user_name_and_password",
 			dto: UserSignUpDto{
 				Email: "testemail@gmail.com",
 				UserName: "",
@@ -118,6 +122,7 @@ func TestUserSignUpDto_IntoUser(t *testing.T) {
 			wantErr: true,
 		},
 		{
+			name: "short_user_name",
 			dto: UserSignUpDto{
 				Email: "testemail@gmail.com",
 				UserName: "short",
@@ -128,7 +133,7 @@ func TestUserSignUpDto_IntoUser(t *testing.T) {
 		},
 	}
 	for _, tc := range tests {
-		t.Run("SignUpDto", func(t *testing.T) {
+		t.Run(tc.name, func(t *testing.T) {
 			if tc.wantErr {
 				user, err := tc.dto.IntoUser()
 				if err == nil || user != nil {

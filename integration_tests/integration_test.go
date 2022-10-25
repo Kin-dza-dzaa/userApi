@@ -1,3 +1,4 @@
+// +build integration
 package integration_test
 
 import (
@@ -7,7 +8,6 @@ import (
 	"net/http"
 	"testing"
 	"time"
-
 	config "github.com/Kin-dza-dzaa/userApi/configs"
 	"github.com/Kin-dza-dzaa/userApi/internal/apierror"
 	"github.com/Kin-dza-dzaa/userApi/internal/dto"
@@ -70,10 +70,12 @@ func (suite *IntegrationTestSuite) TearDownTest() {
 
 func (suite *IntegrationTestSuite) TestSignUp() {
 	testCases := []struct{
+		name 		string
 		input 		*dto.UserSignUpDto
 		result 		apierror.ErrorStruct
 	}{
 		{
+			name: "good_user_data",
 			input: &dto.UserSignUpDto{
 				Email: "testEmail@gmail.com",
 				UserName: "testUserValid",
@@ -85,6 +87,7 @@ func (suite *IntegrationTestSuite) TestSignUp() {
 			},
 		},
 		{
+			name: "nil_input",
 			input: nil,
 			result: apierror.ErrorStruct{
 				Result: "error",
@@ -92,6 +95,7 @@ func (suite *IntegrationTestSuite) TestSignUp() {
 			},
 		},
 		{
+			name: "empty_user",
 			input: &dto.UserSignUpDto{},
 			result: apierror.ErrorStruct{
 				Result: "error",
@@ -100,7 +104,7 @@ func (suite *IntegrationTestSuite) TestSignUp() {
 		},
 	}
 	for _, tc := range testCases {
-		suite.T().Run("TestSignUp", func(t *testing.T) {
+		suite.T().Run(tc.name, func(t *testing.T) {
 			byteData, err := json.Marshal(tc.input)
 			if err != nil {
 				suite.FailNow(err.Error())
