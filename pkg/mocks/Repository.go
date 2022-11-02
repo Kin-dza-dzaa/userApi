@@ -65,25 +65,18 @@ func (_m *Repository) GetVerifiedUser(ctx context.Context, user *models.User) (*
 	return r0, r1
 }
 
-// IfUnverifiedUserExists provides a mock function with given fields: ctx, user
-func (_m *Repository) IfUnverifiedUserExists(ctx context.Context, user *models.User) (bool, error) {
-	ret := _m.Called(ctx, user)
+// IfUnverifiedUserExists provides a mock function with given fields: ctx, user, result
+func (_m *Repository) IfUnverifiedUserExists(ctx context.Context, user *models.User, result *bool) error {
+	ret := _m.Called(ctx, user, result)
 
-	var r0 bool
-	if rf, ok := ret.Get(0).(func(context.Context, *models.User) bool); ok {
-		r0 = rf(ctx, user)
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, *models.User, *bool) error); ok {
+		r0 = rf(ctx, user, result)
 	} else {
-		r0 = ret.Get(0).(bool)
+		r0 = ret.Error(0)
 	}
 
-	var r1 error
-	if rf, ok := ret.Get(1).(func(context.Context, *models.User) error); ok {
-		r1 = rf(ctx, user)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
+	return r0
 }
 
 // UpdateCredentials provides a mock function with given fields: ctx, user

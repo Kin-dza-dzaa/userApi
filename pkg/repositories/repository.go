@@ -8,15 +8,16 @@ import (
 )
 
 type Repository interface {
-	AddUser(ctx context.Context, user *models.User) error
-	UpdateCredentials(ctx context.Context, user *models.User) error
-	VerifyUser(ctx context.Context, user *models.User) error
-	GetUUid(ctx context.Context, user *models.User) error
-	GetVerifiedUser(ctx context.Context, user *models.User) (*models.User, error)
-	UpdateRefreshToken(ctx context.Context, user *models.User) error
-	IfUnverifiedUserExists(ctx context.Context, user *models.User) (bool, error)
+	AddUser(context.Context, *models.User) error
+	UpdateCredentials(context.Context, *models.User) error
+	VerifyUser(context.Context, *models.User) error
+	GetUUid(context.Context, *models.User) error
+	GetVerifiedUser(context.Context, *models.User) (*models.User, error)
+	UpdateRefreshToken(context.Context, *models.User) error
+	IfUnverifiedUserExists(context.Context, *models.User, *bool) error
 } 
 
 func NewRepository(pool *pgxpool.Pool) Repository {
 	return NewUserRepository(pool)
 }
+

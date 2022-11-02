@@ -2,10 +2,12 @@ package repository
 
 import (
 	"context"
+	"net/http"
 	"reflect"
 	"testing"
 	"time"
 
+	"github.com/Kin-dza-dzaa/userApi/internal/apierror"
 	"github.com/Kin-dza-dzaa/userApi/internal/models"
 	"github.com/chrisyxlee/pgxpoolmock"
 	"github.com/golang/mock/gomock"
@@ -91,6 +93,7 @@ func TestVerifyUser(t *testing.T) {
 			user *models.User
 		}
 		beforeTest func(mockPool *pgxpoolmock.MockPgxIface, user *models.User)
+		err *apierror.ErrorStruct
 	}{
 		{
 			name: "VerifyUser",
@@ -101,6 +104,7 @@ func TestVerifyUser(t *testing.T) {
 			beforeTest: func(mockPool *pgxpoolmock.MockPgxIface, user *models.User) {
 				mockPool.EXPECT().Exec(gomock.Any(), queryVerifyUser, user.RefreshToken, user.ExpirationTime, user.VerificationCode).Return(nil, nil).Times(1)
 			},
+			err: apierror.NewErrorStruct(ErrWrongVerificationCode.Error(), "error", http.StatusBadRequest),
 		},
 	}
 	for _, tc := range testCases {
@@ -110,8 +114,14 @@ func TestVerifyUser(t *testing.T) {
 			MockPool := pgxpoolmock.NewMockPgxIface(ctrl)
 			repository := NewUserRepository(MockPool)
 			tc.beforeTest(MockPool, tc.args.user)
-			if err := repository.VerifyUser(tc.args.ctx, tc.args.user); err != ErrWrongVerificationCode {
+			err := repository.VerifyUser(tc.args.ctx, tc.args.user)
+			Err, ok := err.(*apierror.ErrorStruct)
+			if !ok {
 				t.FailNow()
+			} else {
+				if !reflect.DeepEqual(*tc.err, *Err) {
+					t.FailNow()
+				}
 			}
 		})
 	}
@@ -256,9 +266,9 @@ func TestIfUnverifiedUserExists(t *testing.T) {
 			MockPool := pgxpoolmock.NewMockPgxIface(ctrl)
 			repository := NewUserRepository(MockPool)
 			tc.beforeTest(MockPool, tc.args.user)
-			_, err := repository.IfUnverifiedUserExists(tc.args.ctx, tc.args.user)
+			err := repository.IfUnverifiedUserExists(tc.args.ctx, tc.args.user, new(bool))
 			if err != nil {
-				t.FailNow()
+				t.Fail()
 			}
 		})
 	}

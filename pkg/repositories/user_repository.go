@@ -3,7 +3,10 @@ package repository
 import (
 	"context"
 	"errors"
+	"net/http"
 	"time"
+
+	"github.com/Kin-dza-dzaa/userApi/internal/apierror"
 	"github.com/Kin-dza-dzaa/userApi/internal/models"
 	"github.com/google/uuid"
 	"github.com/jackc/pgconn"
@@ -22,7 +25,8 @@ const (
 
 var (
 	ErrWrongVerificationCode = errors.New("wrong verification code")
-	ErrUserDoesntExists = errors.New("user doesn't exist")
+	ErrUserAlredyExists = errors.New("user already exists")
+	ErrUserDoesntExists = errors.New("refresh token expired or user doesn't exists")
 	ErrWrongEmail = errors.New("wrong email")
 )
 
@@ -32,14 +36,14 @@ type UserRepositry struct {
 
 func (repository *UserRepositry) AddUser(ctx context.Context, user *models.User) error {
 	if _, err := repository.pool.Exec(ctx, queryCreateUser, user.UserId, user.UserName, user.Email, user.Password, user.RegistrationTime, user.VerificationCode, user.Verified); err != nil {
-		return err
+		return apierror.NewErrorStruct(ErrUserAlredyExists.Error(), "error", http.StatusBadRequest)
 	}
 	return nil
 }
 
 func (repository *UserRepositry) UpdateCredentials(ctx context.Context, user *models.User) error {
 	if _, err := repository.pool.Exec(ctx, queryUpdateCreditnails, user.UserName, user.Password, user.VerificationCode, user.Email); err != nil {
-		return err
+		return apierror.NewErrorStruct(ErrUserAlredyExists.Error(), "error", http.StatusBadRequest)
 	}
 	return nil
 }
@@ -50,7 +54,7 @@ func (repository *UserRepositry) VerifyUser(ctx context.Context, user *models.Us
 		return err
 	}
 	if commandTag.RowsAffected() == 0 {
-		return ErrWrongVerificationCode
+		return apierror.NewErrorStruct(ErrWrongVerificationCode.Error(), "error", http.StatusBadRequest)
 	}
 	return nil
 }
@@ -58,11 +62,14 @@ func (repository *UserRepositry) VerifyUser(ctx context.Context, user *models.Us
 func (repository *UserRepositry) GetUUid(ctx context.Context, user *models.User) error {
 	var userId string
 	if err := repository.pool.QueryRow(ctx, queryGetUUid, user.RefreshToken, time.Now().UTC()).Scan(&userId); err != nil {
-		return ErrUserDoesntExists
+		if err == pgx.ErrNoRows {
+			return apierror.NewErrorStruct(ErrUserDoesntExists.Error(), "error", http.StatusBadRequest)
+		}
+		return err
 	}
 	UUid, err := uuid.Parse(userId)
 	if err != nil {
-		return err
+		return apierror.NewErrorStruct(ErrUserDoesntExists.Error(), "error", http.StatusBadRequest)
 	}
 	user.UserId = UUid
 	return nil
@@ -72,7 +79,7 @@ func (repository *UserRepositry) GetVerifiedUser(ctx context.Context, user *mode
 	var dbUser models.User
 	if err := repository.pool.QueryRow(ctx, queryGetVerifiedUser, user.Email).Scan(&dbUser.UserId, &dbUser.Password, &dbUser.RefreshToken, &dbUser.ExpirationTime); err != nil {
 		if err == pgx.ErrNoRows {
-			return nil, ErrWrongEmail
+			return nil, apierror.NewErrorStruct(ErrWrongEmail.Error(), "error", http.StatusBadRequest)
 		}
 		return nil, err
 	}
@@ -87,12 +94,11 @@ func (repository *UserRepositry) UpdateRefreshToken(ctx context.Context, user *m
 	return nil
 }
 
-func (repository *UserRepositry) IfUnverifiedUserExists(ctx context.Context, user *models.User) (bool, error) {
-	var result bool
-	if err := repository.pool.QueryRow(ctx, queryIfUnverifiedUserExists, user.Email).Scan(&result); err != nil {
-		return false, err
+func (repository *UserRepositry) IfUnverifiedUserExists(ctx context.Context, user *models.User, result *bool) (error) {
+	if err := repository.pool.QueryRow(ctx, queryIfUnverifiedUserExists, user.Email).Scan(result); err != nil {
+		return err
 	}
-	return result, nil
+	return nil
 }
 
 func NewUserRepository(pool dbconn) *UserRepositry {
@@ -103,8 +109,14 @@ func NewUserRepository(pool dbconn) *UserRepositry {
 
 // for tests
 type dbconn interface {
-	Begin(ctx context.Context) (pgx.Tx, error)
-	Exec(ctx context.Context, sql string, arguments ...interface{}) (pgconn.CommandTag, error)
-	Query(ctx context.Context, sql string, optionsAndArgs ...interface{}) (pgx.Rows, error)
-	QueryRow(ctx context.Context, sql string, optionsAndArgs ...interface{}) pgx.Row
+	Close()
+    Exec(ctx context.Context, sql string, arguments ...interface{}) (pgconn.CommandTag, error)
+    Query(ctx context.Context, sql string, args ...interface{}) (pgx.Rows, error)
+    QueryRow(ctx context.Context, sql string, args ...interface{}) pgx.Row
+    QueryFunc(ctx context.Context, sql string, args []interface{}, scans []interface{}, f func(pgx.QueryFuncRow) error) (pgconn.CommandTag, error)
+    SendBatch(ctx context.Context, b *pgx.Batch) pgx.BatchResults
+    Begin(ctx context.Context) (pgx.Tx, error)
+    BeginTx(ctx context.Context, txOptions pgx.TxOptions) (pgx.Tx, error)
+    BeginFunc(ctx context.Context, f func(pgx.Tx) error) error
+    BeginTxFunc(ctx context.Context, txOptions pgx.TxOptions, f func(pgx.Tx) error) error
 }

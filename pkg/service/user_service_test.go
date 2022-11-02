@@ -53,7 +53,7 @@ func (suite *UserServiceSuite) TestSignUp() {
 	}
 	for _, tc := range testSlice {
 		suite.T().Run("SignUp", func(t *testing.T) {
-			suite.repository.On("IfUnverifiedUserExists", mock.Anything, mock.Anything).Return(false, errors.New(""))
+			suite.repository.On("IfUnverifiedUserExists", mock.Anything, mock.Anything, mock.Anything).Return(errors.New(""))
 			err := suite.service.SignUpUser(context.TODO(), &models.User{})
 			suite.Equal(tc.err, err.Error())
 		})

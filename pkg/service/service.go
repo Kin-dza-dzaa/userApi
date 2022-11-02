@@ -8,10 +8,10 @@ import (
 )
 
 type Service interface {
-	SignUpUser(ctx context.Context, user *models.User) error
-	SignInUser(ctx context.Context, user *models.User) error
-	VerifyUser(ctx context.Context, user *models.User) error
-	GetAccessToken(ctx context.Context, user *models.User) error
+	SignUpUser(context.Context, *models.User) error
+	SignInUser(context.Context, *models.User) error
+	VerifyUser(context.Context, *models.User) error
+	GetAccessToken(context.Context, *models.User) error
 }
 
 func NewService(repository repository.Repository, config *config.Config) Service {

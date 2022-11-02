@@ -5,8 +5,13 @@ import (
 )
 
 type ErrorStruct struct {
-	Message          string `json:"message,omitempty"`
-	Result           string `json:"result,omitempty"`
+	Message string `json:"message,omitempty"`
+	Result  string `json:"result,omitempty"`
+	Code    int    `json:"code"`
+}
+
+func (errorStruct ErrorStruct) Error() string {
+	return errorStruct.Message
 }
 
 func (errorStruct *ErrorStruct) Marshal() []byte {
@@ -17,9 +22,10 @@ func (errorStruct *ErrorStruct) Marshal() []byte {
 	return responseBytes
 }
 
-func NewErrorStruct(Message, Result string) *ErrorStruct {
+func NewErrorStruct(Message string, Result string, code int) *ErrorStruct {
 	return &ErrorStruct{
-		Result:             Result,
-		Message:          	Message,
+		Result:  Result,
+		Message: Message,
+		Code:    code,
 	}
 }

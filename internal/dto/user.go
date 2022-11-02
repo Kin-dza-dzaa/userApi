@@ -2,7 +2,10 @@ package dto
 
 import (
 	"errors"
+	"net/http"
 	"net/mail"
+
+	"github.com/Kin-dza-dzaa/userApi/internal/apierror"
 	"github.com/Kin-dza-dzaa/userApi/internal/models"
 )
 
@@ -18,10 +21,10 @@ type UserSignInDto struct {
 func (dto UserSignInDto) IntoUser() (*models.User, error) {
 	email, err := mail.ParseAddress(dto.Email)
 	if err != nil {
-		return nil, ErrInvalidCredentials
+		return nil, apierror.NewErrorStruct(ErrInvalidCredentials.Error(), "error", http.StatusBadRequest)
 	}
 	if len(dto.Password) < 8 {
-		return nil, ErrInvalidCredentials
+		return nil, apierror.NewErrorStruct(ErrInvalidCredentials.Error(), "error", http.StatusBadRequest)
 	}
 	var User models.User
 	User.Email = email.Address
@@ -38,14 +41,14 @@ type UserSignUpDto struct {
 func (dto UserSignUpDto) IntoUser() (*models.User, error) {
 	email, err := mail.ParseAddress(dto.Email)
 	if err != nil {
-		return nil, ErrInvalidCredentials
+		return nil, apierror.NewErrorStruct(ErrInvalidCredentials.Error(), "error", http.StatusBadRequest)
 	}
 
 	if len(dto.Password) < 8 {
-		return nil, ErrInvalidCredentials
+		return nil, apierror.NewErrorStruct(ErrInvalidCredentials.Error(), "error", http.StatusBadRequest)
 	}
 	if len(dto.UserName) < 8 {
-		return nil, ErrInvalidCredentials
+		return nil, apierror.NewErrorStruct(ErrInvalidCredentials.Error(), "error", http.StatusBadRequest)
 	}
 	var User models.User
 	User.Email = email.Address

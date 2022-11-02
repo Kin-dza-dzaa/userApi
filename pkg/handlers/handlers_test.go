@@ -38,7 +38,7 @@ func (suite *HandlersSuite) TestSignUpHandler() {
 	testCases := []struct {
 		name        string
 		user        dto.UserSignUpDto
-		response    apierror.ErrorStruct
+		response    *apierror.ErrorStruct
 		expectedErr bool
 	}{
 		{
@@ -48,9 +48,10 @@ func (suite *HandlersSuite) TestSignUpHandler() {
 				Email:    "testEmail@gmail.com",
 				Password: "12345Qwerty",
 			},
-			response: apierror.ErrorStruct{
+			response: &apierror.ErrorStruct{
 				Message: "email was sent",
 				Result:  "ok",
+				Code:    200,
 			},
 			expectedErr: false,
 		},
@@ -60,9 +61,10 @@ func (suite *HandlersSuite) TestSignUpHandler() {
 				Email:    "testEmail@gmail.com",
 				Password: "12345Qwerty",
 			},
-			response: apierror.ErrorStruct{
+			response: &apierror.ErrorStruct{
 				Message: dto.ErrInvalidCredentials.Error(),
 				Result:  "error",
+				Code:    400,
 			},
 			expectedErr: true,
 		},
@@ -73,18 +75,20 @@ func (suite *HandlersSuite) TestSignUpHandler() {
 				UserName: "ValidUserName",
 				Password: "",
 			},
-			response: apierror.ErrorStruct{
+			response: &apierror.ErrorStruct{
 				Message: dto.ErrInvalidCredentials.Error(),
 				Result:  "error",
+				Code:    400,
 			},
 			expectedErr: true,
 		},
 		{
 			name: "ivalid_user",
 			user: dto.UserSignUpDto{},
-			response: apierror.ErrorStruct{
+			response: &apierror.ErrorStruct{
 				Message: dto.ErrInvalidCredentials.Error(),
 				Result:  "error",
+				Code:    400,
 			},
 			expectedErr: true,
 		},
@@ -100,12 +104,16 @@ func (suite *HandlersSuite) TestSignUpHandler() {
 			if !tc.expectedErr {
 				suite.service.On("SignUpUser", mock.Anything, mock.Anything).Return(nil).Once()
 			}
-			suite.handlers.ApiError.ErrorMiddleWare(suite.handlers.SignUpHandler()).ServeHTTP(w, r)
-			var response apierror.ErrorStruct
-			if err := json.Unmarshal(w.Body.Bytes(), &response); err != nil {
-				suite.FailNow(err.Error())
+			err = suite.handlers.SignUpHandler()(w, r)
+			if tc.expectedErr {
+				Err, ok := err.(*apierror.ErrorStruct)
+				if !ok {
+					suite.FailNow(err.Error())
+				}
+				suite.Equal(tc.response, Err)
+			} else {
+				suite.Equal(err, nil)
 			}
-			suite.Equal(tc.response, response)
 		})
 	}
 }
@@ -114,7 +122,7 @@ func (suite *HandlersSuite) TestSignInHandler() {
 	testSlice := []struct {
 		name        string
 		user        dto.UserSignUpDto
-		response    apierror.ErrorStruct
+		response    *apierror.ErrorStruct
 		expectedErr bool
 	}{
 		{
@@ -123,8 +131,9 @@ func (suite *HandlersSuite) TestSignInHandler() {
 				Email:    "testEmail@gmail.com",
 				Password: "12345Qwerty",
 			},
-			response: apierror.ErrorStruct{
+			response: &apierror.ErrorStruct{
 				Result: "ok",
+				Code:   200,
 			},
 			expectedErr: false,
 		},
@@ -134,9 +143,10 @@ func (suite *HandlersSuite) TestSignInHandler() {
 				Email:    "testEmail@gmail.com",
 				Password: "",
 			},
-			response: apierror.ErrorStruct{
+			response: &apierror.ErrorStruct{
 				Result:  "error",
 				Message: dto.ErrInvalidCredentials.Error(),
+				Code:    400,
 			},
 			expectedErr: true,
 		},
@@ -146,18 +156,20 @@ func (suite *HandlersSuite) TestSignInHandler() {
 				Email:    "",
 				Password: "123456789",
 			},
-			response: apierror.ErrorStruct{
+			response: &apierror.ErrorStruct{
 				Result:  "error",
 				Message: dto.ErrInvalidCredentials.Error(),
+				Code:    400,
 			},
 			expectedErr: true,
 		},
 		{
 			name: "ivalid_user",
 			user: dto.UserSignUpDto{},
-			response: apierror.ErrorStruct{
+			response: &apierror.ErrorStruct{
 				Result:  "error",
 				Message: dto.ErrInvalidCredentials.Error(),
+				Code:    400,
 			},
 			expectedErr: true,
 		},
@@ -173,12 +185,16 @@ func (suite *HandlersSuite) TestSignInHandler() {
 			if !tc.expectedErr {
 				suite.service.On("SignInUser", mock.Anything, mock.Anything).Return(nil).Once()
 			}
-			suite.handlers.ApiError.ErrorMiddleWare(suite.handlers.SignInHandler()).ServeHTTP(w, r)
-			var response apierror.ErrorStruct
-			if err := json.Unmarshal(w.Body.Bytes(), &response); err != nil {
-				suite.FailNow(err.Error())
+			err = suite.handlers.SignInHandler()(w, r)
+			if tc.expectedErr {
+				Err, ok := err.(*apierror.ErrorStruct)
+				if !ok {
+					suite.FailNow(err.Error())
+				}
+				suite.Equal(tc.response, Err)
+			} else {
+				suite.Equal(err, nil)
 			}
-			suite.Equal(tc.response, response)
 		})
 	}
 }
@@ -186,22 +202,14 @@ func (suite *HandlersSuite) TestSignInHandler() {
 func (suite *HandlersSuite) TestGetTokenHandler() {
 	testCases := []struct {
 		name        string
-		result      apierror.ErrorStruct
 		expectedErr bool
 	}{
 		{
 			name: "refresh_token_present",
-			result: apierror.ErrorStruct{
-				Result: "ok",
-			},
 			expectedErr: false,
 		},
 		{
 			name: "refresh_token_not_present",
-			result: apierror.ErrorStruct{
-				Result:  "error",
-				Message: "unexpected error",
-			},
 			expectedErr: true,
 		},
 	}
@@ -215,31 +223,26 @@ func (suite *HandlersSuite) TestGetTokenHandler() {
 				})
 				suite.service.Mock.On("GetAccessToken", mock.Anything, mock.Anything).Return(nil).Once()
 			}
-			suite.handlers.ApiError.ErrorMiddleWare(suite.handlers.GetTokenHandler()).ServeHTTP(w, r)
-			var response apierror.ErrorStruct
-			if err := json.NewDecoder(w.Body).Decode(&response); err != nil {
-				suite.T().FailNow()
+			err := suite.handlers.GetTokenHandler()(w, r)
+			if tc.expectedErr {
+				suite.Error(err)
+			} else {
+				suite.Nil(err)
 			}
-			suite.Equal(tc.result, response)
 		})
 	}
-
 }
 
 func (suite *HandlersSuite) TestLogOutHandler() {
 	testCases := []struct {
 		name    string
-		result  apierror.ErrorStruct
 		cookies []*http.Cookie
 	}{
 		{
 			name: "cookie_check",
-			result: apierror.ErrorStruct{
-				Result: "ok",
-			},
 			cookies: []*http.Cookie{
 				{
-					Raw: "Refresh-token=; Path=/; Max-Age=0; HttpOnly; SameSite=Strict",
+					Raw:      "Refresh-token=; Path=/; Max-Age=0; HttpOnly; SameSite=Strict",
 					Name:     "Refresh-token",
 					Value:    "",
 					MaxAge:   -1,
@@ -249,7 +252,7 @@ func (suite *HandlersSuite) TestLogOutHandler() {
 					Path:     "/",
 				},
 				{
-					Raw: "Access-token=; Path=/; Max-Age=0; HttpOnly; SameSite=Strict",
+					Raw:      "Access-token=; Path=/; Max-Age=0; HttpOnly; SameSite=Strict",
 					Name:     "Access-token",
 					Value:    "",
 					MaxAge:   -1,
@@ -265,13 +268,13 @@ func (suite *HandlersSuite) TestLogOutHandler() {
 		suite.T().Run(tc.name, func(t *testing.T) {
 			w := httptest.NewRecorder()
 			r := httptest.NewRequest("POST", "/user/logout", nil)
-			suite.handlers.ApiError.ErrorMiddleWare(suite.handlers.LogOutHandler()).ServeHTTP(w, r)
+			err := suite.handlers.LogOutHandler()(w, r)
 			var result apierror.ErrorStruct
 			if err := json.NewDecoder(w.Body).Decode(&result); err != nil {
 				t.FailNow()
 			}
 			suite.Equal(tc.cookies, w.Result().Cookies())
-			suite.Equal(tc.result, result)
+			suite.Nil(err)
 		})
 	}
 }

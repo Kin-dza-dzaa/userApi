@@ -84,6 +84,7 @@ func (suite *IntegrationTestSuite) TestSignUp() {
 			result: apierror.ErrorStruct{
 				Result: "ok",
 				Message: "email was sent",
+				Code: 200,
 			},
 		},
 		{
@@ -92,6 +93,7 @@ func (suite *IntegrationTestSuite) TestSignUp() {
 			result: apierror.ErrorStruct{
 				Result: "error",
 				Message: dto.ErrInvalidCredentials.Error(),
+				Code: 400,
 			},
 		},
 		{
@@ -100,6 +102,7 @@ func (suite *IntegrationTestSuite) TestSignUp() {
 			result: apierror.ErrorStruct{
 				Result: "error",
 				Message: dto.ErrInvalidCredentials.Error(),
+				Code: 400,
 			},
 		},
 	}

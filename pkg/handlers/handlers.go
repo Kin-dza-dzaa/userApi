@@ -2,9 +2,9 @@ package handlers
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 	"strings"
-
 	config "github.com/Kin-dza-dzaa/userApi/configs"
 	"github.com/Kin-dza-dzaa/userApi/internal/apierror"
 	"github.com/Kin-dza-dzaa/userApi/internal/dto"
@@ -15,6 +15,10 @@ import (
 )
 
 var StopHTTPServerChan = make(chan bool)
+
+var (
+	ErrCookieNotPresent = errors.New("cookie not present")
+)
 
 type Handlers struct {
 	Router  *mux.Router
@@ -29,7 +33,7 @@ func (handlers *Handlers) SignUpHandler() apierror.UserHandler {
 		w.Header().Set("Content-type", "application/json")
 		var userDto dto.UserSignUpDto
 		if err := json.NewDecoder(r.Body).Decode(&userDto); err != nil {
-			return err
+			return apierror.NewErrorStruct(`unmarshal failed, expected object{"email":"string", "password":"string", "user_name": "string"}`, "error", http.StatusBadRequest)
 		}
 		User, err := userDto.IntoUser()
 		if err != nil {
@@ -39,7 +43,7 @@ func (handlers *Handlers) SignUpHandler() apierror.UserHandler {
 			return err
 		}
 		w.WriteHeader(http.StatusOK)
-		json.NewEncoder(w).Encode(map[string]interface{}{"result": "ok", "message": "email was sent"})
+		json.NewEncoder(w).Encode(map[string]interface{}{"result": "ok", "message": "email was sent", "code": 200})
 		return nil
 	}
 }
@@ -49,7 +53,7 @@ func (handlers *Handlers) SignInHandler() apierror.UserHandler {
 		w.Header().Set("Content-type", "application/json")
 		var userDto dto.UserSignInDto
 		if err := json.NewDecoder(r.Body).Decode(&userDto); err != nil {
-			return err
+			return apierror.NewErrorStruct(`unmarshal failed, expected object{"email":"string", "password":"string"}`, "error", http.StatusBadRequest)
 		}
 		User, err := userDto.IntoUser()
 		if err != nil {
@@ -78,7 +82,7 @@ func (handlers *Handlers) SignInHandler() apierror.UserHandler {
 		})
 		w.Header().Set("X-CSRF-Token", User.CsrfToken)
 		w.WriteHeader(http.StatusOK)
-		json.NewEncoder(w).Encode(map[string]interface{}{"result": "ok"})
+		json.NewEncoder(w).Encode(map[string]interface{}{"result": "ok", "code": 200})
 		return nil
 	}
 }
@@ -112,7 +116,7 @@ func (handlers *Handlers) VerifyHandler() apierror.UserHandler {
 		})
 		w.Header().Set("X-CSRF-Token", user.CsrfToken)
 		w.WriteHeader(http.StatusOK)
-		json.NewEncoder(w).Encode(map[string]interface{}{"result": "ok"})
+		json.NewEncoder(w).Encode(map[string]interface{}{"result": "ok", "code": 200})
 		return nil
 	}
 }
@@ -122,7 +126,7 @@ func (handlers *Handlers) GetTokenHandler() apierror.UserHandler {
 		w.Header().Set("Content-type", "application/json")
 		cookie, err := r.Cookie("Refresh-token")
 		if err != nil {
-			return err
+			return apierror.NewErrorStruct(ErrCookieNotPresent.Error(), "error", http.StatusBadRequest)
 		}
 		user := new(models.User)
 		user.RefreshToken = cookie.Value
@@ -140,7 +144,7 @@ func (handlers *Handlers) GetTokenHandler() apierror.UserHandler {
 		})
 		w.Header().Set("X-CSRF-Token", user.CsrfToken)
 		w.WriteHeader(http.StatusOK)
-		json.NewEncoder(w).Encode(map[string]interface{}{"result": "ok"})
+		json.NewEncoder(w).Encode(map[string]interface{}{"result": "ok", "code": 200})
 		return nil
 	}
 }
@@ -167,7 +171,7 @@ func (handlers *Handlers) LogOutHandler() apierror.UserHandler {
 			Path:     "/",
 		})
 		w.WriteHeader(http.StatusOK)
-		json.NewEncoder(w).Encode(map[string]interface{}{"result": "ok"})
+		json.NewEncoder(w).Encode(map[string]interface{}{"result": "ok", "code": 200})
 		return nil
 	}
 }
@@ -181,6 +185,8 @@ func NewHandlers(service service.Service, config *config.Config, ApiError *apier
 	handlers.Cors = cors.New(cors.Options{
 		AllowedOrigins: strings.Split(config.AllowedOrigins, ","),
 		AllowedHeaders: []string{"User-Agent", "Content-type"},
+		ExposedHeaders: []string{"X-Csrf-Token"},
+		AllowCredentials: config.AllowCredentials,
 		MaxAge:         5,
 		AllowedMethods: []string{"POST", "GET", "PUT", "DELETE", "OPTIONS"},
 	})
@@ -190,6 +196,5 @@ func NewHandlers(service service.Service, config *config.Config, ApiError *apier
 	user.Handle("/token", handlers.ApiError.ErrorMiddleWare(handlers.GetTokenHandler())).Methods("GET").Schemes("http")
 	user.Handle("/verify/{code:.{16}}", handlers.ApiError.ErrorMiddleWare(handlers.VerifyHandler())).Methods("POST").Schemes("http")
 	user.Handle("/logout", handlers.ApiError.ErrorMiddleWare(handlers.LogOutHandler())).Methods("GET").Schemes("http")
-
 	return handlers
 }

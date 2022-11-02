@@ -12,12 +12,11 @@ FROM alpine:latest
 
 WORKDIR /usr/src/app
 
-COPY --chown=65534:65534 --from=build /usr/src/app/bin/app .
-COPY --chown=65534:65534 --from=build /usr/src/app/configs/config.env .
-COPY --chown=65534:65534 --from=build /usr/src/app/internal/templates/response_template.html .
+COPY --from=build /usr/src/app/bin/app .
+COPY --from=build /usr/src/app/configs/config.env .
+COPY --from=build /usr/src/app/internal/templates/response_template.html .
+COPY --from=build /usr/src/app/wait-for-it.sh .
 
-USER 65534
+RUN apk add --no-cache bash
 
 EXPOSE 8001
-
-CMD ["/usr/src/app/app"]

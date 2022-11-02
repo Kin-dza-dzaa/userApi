@@ -2,14 +2,10 @@ package apierror
 
 import (
 	"encoding/json"
-	"errors"
 	"net/http"
 	"net/http/httptest"
 	"testing"
-	"github.com/Kin-dza-dzaa/userApi/internal/dto"
-	repository "github.com/Kin-dza-dzaa/userApi/pkg/repositories"
-	"github.com/Kin-dza-dzaa/userApi/pkg/service"
-	"github.com/jackc/puddle"
+
 	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/suite"
 )
@@ -26,56 +22,47 @@ func (suite *TestSuite) SetupSuite() {
 
 func (suite *TestSuite) TestMiddleware() {
 	testCases := []struct {
-		name string
+		name             string
 		expectedResponse *ErrorStruct
-		raiseError error
 	}{
 		{
-			name: "closed_pool",
-			expectedResponse: NewErrorStruct("internal server error", "error"),
-			raiseError: puddle.ErrClosedPool,
+			name:             "closed_pool",
+			expectedResponse: NewErrorStruct("internal server error", "error", http.StatusInternalServerError),
 		},
 		{
-			name: "busy_pool",
-			expectedResponse: NewErrorStruct("too many requests", "error"),
-			raiseError: puddle.ErrNotAvailable,
+			name:             "busy_pool",
+			expectedResponse: NewErrorStruct("too many requests", "error", http.StatusTooManyRequests),
 		},
 		{
-			name: "ivalid_credentials",
-			expectedResponse: NewErrorStruct(dto.ErrInvalidCredentials.Error(), "error"),
-			raiseError: dto.ErrInvalidCredentials,
+			name:             "ivalid_credentials",
+			expectedResponse: NewErrorStruct("invalid credentials", "error", http.StatusBadRequest),
 		},
 		{
-			name: "wrong_password",
-			expectedResponse: NewErrorStruct(service.ErrWrongPassowrd.Error(), "error"),
-			raiseError: service.ErrWrongPassowrd,
+			name:             "wrong_password",
+			expectedResponse: NewErrorStruct("wrong password", "error", http.StatusBadRequest),
 		},
 		{
-			name: "user_doesn't_exists",
-			expectedResponse: NewErrorStruct(repository.ErrUserDoesntExists.Error(), "error"),
-			raiseError: repository.ErrUserDoesntExists,
+			name:             "user_doesn't_exists",
+			expectedResponse: NewErrorStruct("user doesn't exist", "error", http.StatusBadRequest),
 		},
 		{
-			name: "wrong_email",
-			expectedResponse: NewErrorStruct(repository.ErrWrongEmail.Error(), "error"),
-			raiseError: repository.ErrWrongEmail,
+			name:             "wrong_email",
+			expectedResponse: NewErrorStruct("wrong email", "error", http.StatusBadRequest),
 		},
 		{
-			name: "wrong_verif_code",
-			expectedResponse: NewErrorStruct(repository.ErrWrongVerificationCode.Error(), "error"),
-			raiseError: repository.ErrWrongVerificationCode,
+			name:             "wrong_verif_code",
+			expectedResponse: NewErrorStruct("wrong verification code", "error", http.StatusBadRequest),
 		},
 		{
-			name: "not_validated_error",
-			expectedResponse: NewErrorStruct("unexpected error", "error"),
-			raiseError: errors.New("not validated error"),
+			name:             "not_validated_error",
+			expectedResponse: NewErrorStruct("unexpected error", "error", http.StatusInternalServerError),
 		},
-	}	
+	}
 	for _, tc := range testCases {
 		suite.T().Run(tc.name, func(t *testing.T) {
 			r := httptest.NewRequest("POST", "/test", nil)
 			w := httptest.NewRecorder()
-			suite.apiError.ErrorMiddleWare(func(w http.ResponseWriter, r *http.Request) error {return tc.raiseError}).ServeHTTP(w, r)
+			suite.apiError.ErrorMiddleWare(func(w http.ResponseWriter, r *http.Request) error { return tc.expectedResponse }).ServeHTTP(w, r)
 			var response ErrorStruct
 			err := json.NewDecoder(w.Body).Decode(&response)
 			if err != nil {

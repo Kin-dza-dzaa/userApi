@@ -1,15 +1,24 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Verification code</title>
 </head>
+
 <body>
-    <p>Hi {{ .UserName }}!!!</p>
+    <h1>Hi {{ .UserName }}!!!</h1>
     <br>
+    <h2>Please verify your email by following the link below.</h2>
     <br>
-    <p>Your verification code is: {{ .VerificationCode }}</p>
+    <a href={{ .VerificationCode }}
+        style="box-sizing:border-box;text-decoration:none;background-color:#007bff;border:solid 1px #007bff;border-radius:4px;color:#ffffff;font-size:16px;font-weight:bold;margin:0;padding:9px 25px;display:inline-block;letter-spacing:1px"
+        target="_blank"
+        data-saferedirecturl="https://www.google.com/url?q=https://email.notify.docker.com/c/eJxNTrtuxDAM-5pkcyBblh-Dhy79D8VWEuMucZH6hv59fZ0KcCAJgqQk7Rw5Swg4l0TiZJtrMmCMBo3gNQEusBIVXCFGigJsJwtX63X7WUrLD7mX3M75SFi8jRQcsoUQ2aI3moNeXWB0ju38TEfvX98Tfkzmc-B4rf8ahsE5t9fVB8vt2up9Kjm5PocOtJGRklVYpSgbEFT0xasIRqwgZ_Z2xOY7tZuvXR712ul9dH8X_B3saez9AsFVRp8&amp;source=gmail&amp;ust=1667310308009000&amp;usg=AOvVaw1AxMGhqV7ILT18hDVNgJr3">
+        Verify email address
+    </a>
 </body>
+
 </html>
